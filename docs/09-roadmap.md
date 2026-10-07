@@ -23,7 +23,7 @@ Setelah Q&A dan review dokumen selesai, inisialisasi Git repository dan simpan p
 
 ## Milestone 1: Project foundation
 
-Status: **In progress**. Responsive Blade scaffold, shared navigation, lima GET routes/controllers, asset pipeline, no-data states, dan page-level smoke tests tersedia. Error handling, health checks, ML environment, demo seed command, serta CI belum selesai.
+Status: **Complete locally**. Responsive Blade scaffold, shared navigation, lima GET routes/controllers, asset pipeline, no-data states, safe error pages, health check, pinned ML environment, dan local quality gates tersedia. CI workflow sudah disiapkan dan mulai berjalan setelah repository memiliki GitHub remote.
 
 Deliverables:
 
@@ -31,10 +31,9 @@ Deliverables:
 - Pinned `ml/requirements.txt` untuk offline Python training.
 - Environment example dan Git ignore rules.
 - Blade base layout, navigation, error handling, dan Laravel health checks.
-- Idempotent Artisan `app:seed-demo-data` command untuk employee fiktif.
-- GitHub Actions untuk Pint, Pest, Python unittest/Ruff, dan Vite build setelah repository remote tersedia.
+- GitHub Actions untuk Pint, Pest, Python unittest/Ruff, dan Vite build; remote execution belum diverifikasi karena repository belum memiliki remote.
 
-Stop condition: project berjalan dari clean local setup.
+Stop condition: project berjalan dari clean local setup. Foundation dependency install dan seluruh local quality gate telah diverifikasi pada 2026-10-07.
 
 ## Milestone 2: Employee and database slice
 
@@ -42,6 +41,7 @@ Deliverables:
 
 - Employee dan salary record migrations.
 - Employee list/create/edit/deactivate.
+- Idempotent Artisan `app:seed-demo-data` command untuk employee fiktif setelah employee schema tersedia.
 - Model constraints dan focused tests.
 
 Stop condition: employee lifecycle lulus automated tests tanpa salary prediction.

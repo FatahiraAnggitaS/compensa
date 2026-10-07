@@ -431,7 +431,7 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-054: Laravel monolith with offline Python training
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Accepted, amended by D-071
 - Decision: Gunakan existing Laravel `^13.17` application sebagai web monolith. Python hanya menangani offline scikit-learn training dan JSON export.
 - Reason: Repository aktual sudah memakai Laravel, PHP `^8.3`, Blade, Eloquent, Pest, Pint, Tailwind, dan Vite; tidak ada Django code.
 - Consequence: Laravel memiliki HTTP, validation, database, salary logic, reporting, dan request-time inference. Django tidak digunakan.
@@ -487,7 +487,7 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-061: Artisan demo seed command
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Accepted, scheduling amended by D-072
 - Decision: Sediakan idempotent `php artisan app:seed-demo-data` untuk membuat employee fiktif berlabel demo.
 - Reason: Menyesuaikan demo setup dengan Laravel runtime.
 - Consequence: Command tidak membuat fake salary records atau metrics.
@@ -503,7 +503,7 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-063: Verify Laravel/PHP and Python training compatibility
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Superseded by D-071
 - Decision: Pertahankan existing Composer/NPM lockfiles; pilih dan pin Python/scikit-learn versions setelah official compatibility checks. Verifikasi package PHP tambahan sebelum install.
 - Reason: Repository sudah memiliki PHP/Node dependency baseline, sedangkan Python dependencies belum tersedia.
 - Consequence: Dokumentasi tidak mengarang Python atau PhpSpreadsheet version numbers.
@@ -511,10 +511,10 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-064: Revised Laravel planning baseline approved with blockers
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Accepted, amended by D-071
 - Decision: Laravel monolith, offline Python training, dan JSON inference menjadi planning baseline pengganti Django architecture.
 - Reason: Baseline sekarang mengikuti repository aktual dan pilihan terbaru pemilik project.
-- Consequence: Belum ada business code atau data migration. Dataset facts, decimal implementation, dependency compatibility, dan provider tetap diselesaikan pada milestone terkait.
+- Consequence: Belum ada business code atau data migration. Dataset facts selesai pada Milestone 0 dan dependency compatibility selesai pada Milestone 1; decimal implementation serta provider tetap diselesaikan pada milestone terkait.
 
 ## D-065: No-data responsive UI scaffold before business implementation
 
@@ -567,10 +567,25 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 - Reason: Pemilik project menerima rekomendasi score dan evaluation serta menjelaskan proses pembuatan data. Contract deterministic diperlukan untuk reproducibility, sedangkan keterbatasan data sintetis harus terlihat jelas.
 - Consequence: Observed range 40–90 untuk knowledge serta 50–90 untuk technical/logical digunakan untuk OOD warning, bukan sebagai hard validation range. Metric hanya membuktikan behavior pada dataset ini dan tidak boleh diklaim sebagai akurasi salary dunia nyata. O-004 dan O-008 selesai; Milestone 0 dapat ditutup.
 
+## D-071: Resolve foundation runtime and dependency compatibility
+
+- Date: 2026-10-07
+- Status: Accepted
+- Decision: Naikkan project PHP minimum dari `^8.3` ke `^8.4` agar sesuai dengan Pest 5.3. Gunakan Python 3.13 dengan exact pins scikit-learn 1.9.1, pandas 3.0.6, Ruff 0.16.10, serta seluruh dependency transitif pada `ml/requirements.txt`. Pertahankan Composer dan NPM dependency versions yang sudah terkunci.
+- Reason: `composer.lock` memuat Pest 5.3 yang membutuhkan PHP `^8.4`; root PHP `^8.3` sebelumnya memberi compatibility claim yang tidak benar. Official package metadata menyediakan wheel Python 3.13 untuk ML pins terpilih, dan clean virtual environment install berhasil.
+- Consequence: Clean setup membutuhkan PHP 8.4 dan Python 3.13. Perubahan dependency harus memperbarui exact pins serta menjalankan ulang PHP, Python, dan Vite gates. O-005 selesai.
+
+## D-072: Create demo seed after employee schema
+
+- Date: 2026-10-07
+- Status: Accepted
+- Decision: Implementasikan `php artisan app:seed-demo-data` pada Milestone 2 setelah migration dan model Employee tersedia, bukan sebagai placeholder Milestone 1.
+- Reason: Command wajib membuat employee fiktif secara idempotent. Milestone 1 tidak boleh memperkenalkan business schema sebelum employee/database slice.
+- Consequence: Milestone 1 dapat ditutup tanpa no-op command. Milestone 2 belum selesai sampai command membuat employee demo tanpa salary record atau metric palsu.
+
 ## Open decisions and blockers
 
 | ID | Decision needed | Blocked work |
 | --- | --- | --- |
-| O-005 | Official compatibility verification dan package version pins | Reproducible dependency manifest |
 | O-006 | Specific managed PaaS provider | Production database/runtime configuration |
 | O-007 | PHP fixed-precision decimal mechanism | Salary calculator implementation |

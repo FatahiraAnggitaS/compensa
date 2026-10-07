@@ -171,6 +171,8 @@ Satu self-contained file menghindari mismatch antara model dan metadata. Trainer
 
 Active dataset training command adalah
 `python ml/train.py --dataset data_train/salary_500.csv`. Python dependencies
-dikunci dalam `ml/requirements.txt`. Python version, seed, output details, dan
-expected checks diselesaikan sebelum training implementation. Model artifact
-berubah hanya melalui command tersebut.
+dikunci dalam `ml/requirements.txt` untuk Python 3.13. Environment foundation
+memakai scikit-learn 1.9.1, pandas 3.0.6, Ruff 0.16.10, serta exact transitive
+pins yang telah dipasang pada clean virtual environment. Seed 42 sudah menjadi
+evaluation contract; output details dan artifact checks diselesaikan pada
+Milestone 3. Model artifact berubah hanya melalui command tersebut.

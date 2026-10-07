@@ -1,5 +1,7 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 it('renders the salary prediction scaffold as the root page', function () {
     $this->get(route('salary-predictions.index'))
         ->assertOk()
@@ -30,3 +32,26 @@ it('renders every MVP scaffold page without database access', function (string $
     'monthly report' => ['monthly-reports.index', 'Laporan bulanan'],
     'model information' => ['model-information.index', 'Informasi model'],
 ]);
+
+it('exposes the Laravel health check', function () {
+    $this->get('/up')->assertOk();
+});
+
+it('renders a safe branded not-found page', function () {
+    $this->get('/halaman-tidak-ada')
+        ->assertNotFound()
+        ->assertSeeText('Halaman tidak ditemukan');
+});
+
+it('renders a safe branded server-error page without leaking exception details', function () {
+    config()->set('app.debug', false);
+
+    Route::get('/_test/server-error', function () {
+        throw new RuntimeException('detail internal rahasia');
+    });
+
+    $this->get('/_test/server-error')
+        ->assertServerError()
+        ->assertSeeText('Terjadi kesalahan')
+        ->assertDontSeeText('detail internal rahasia');
+});

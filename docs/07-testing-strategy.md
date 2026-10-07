@@ -102,3 +102,16 @@ Command final ditetapkan setelah implementation tersedia. Minimum gate sebelum m
 7. JSON artifact schema dan Python/PHP parity checks lulus.
 8. Artifact dan Model Information tetap sinkron.
 9. Diff tidak membawa secret, local database, cache, Python virtual environment, atau unapproved dataset.
+
+Command foundation yang sudah aktif:
+
+```text
+php artisan test
+vendor/bin/pint --test
+python -m unittest discover -s ml/tests
+python -m ruff check ml
+python -m ruff format --check ml
+npm run build
+```
+
+Training, artifact, parity, migration, dan report gates mulai aktif pada milestone pemilik behavior tersebut.

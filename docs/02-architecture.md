@@ -5,7 +5,7 @@
 Repository aktual adalah Laravel application skeleton:
 
 - `composer.json` memakai `laravel/laravel` dan `laravel/framework` constraint `^13.17`;
-- PHP constraint adalah `^8.3`;
+- PHP constraint adalah `^8.4`;
 - server-rendered view memakai Blade;
 - frontend assets memakai Tailwind CSS dan Vite yang sudah tersedia;
 - test stack memakai Pest dengan Laravel plugin;
@@ -31,7 +31,7 @@ Pendekatan ini mempertahankan Laravel template dan penggunaan Herd tanpa menamba
 
 | Concern | Pilihan MVP | Status/catatan |
 | --- | --- | --- |
-| Web language | PHP `^8.3` | Terverifikasi dari `composer.json` |
+| Web language | PHP `^8.4` | Selaras dengan Pest 5 dan terverifikasi pada PHP 8.4.25 |
 | Web framework | Laravel `^13.17` | Terverifikasi dari `composer.json` |
 | Local web environment | Laravel Herd | Dipilih pemilik project |
 | UI | Blade | Server-rendered |
@@ -40,8 +40,8 @@ Pendekatan ini mempertahankan Laravel template dan penggunaan Herd tanpa menamba
 | ORM/migrations | Eloquent + Laravel migrations | Application database ownership |
 | Local database | SQLite | Sudah tersedia untuk local setup |
 | Deployment database | PostgreSQL | Managed persistent database |
-| ML language | Python | Offline training only |
-| ML/data | scikit-learn + pandas | Exact versions dipilih setelah compatibility verification |
+| ML language | Python 3.13 | Offline training only |
+| ML/data | scikit-learn 1.9.1 + pandas 3.0.6 | Exact direct dan transitive pins tersedia di `ml/requirements.txt` |
 | Runtime model format | Strict JSON | Coefficients, intercept, contract, ranges, metrics, dan provenance |
 | PHP tests | Pest + Laravel plugin | Sudah tersedia |
 | Python ML tests | standard-library `unittest` | Tanpa pytest |
@@ -193,4 +193,4 @@ Forward path:
 4. Tambahkan JSON artifact contract dan cross-language parity proof.
 5. Implementasikan Laravel inference setelah artifact contract lulus.
 
-Rollback path saat ini hanya memerlukan pengembalian dokumentasi karena belum ada Django code, production data, atau model artifact yang dimigrasikan. Default Laravel migrations tidak dihapus dalam perubahan dokumentasi ini.
+Rollback dependency foundation dilakukan dengan mengembalikan `composer.json`, `composer.lock`, dan `ml/requirements.txt` ke baseline Git sebelumnya. Belum ada production data atau model artifact yang dimigrasikan. Default Laravel migrations tidak dihapus.

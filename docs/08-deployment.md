@@ -12,15 +12,17 @@ Target local flow:
 
 1. Gunakan Laravel Herd untuk melayani project.
 2. Jalankan `composer install` dari `composer.lock`.
-3. Jalankan `npm install` dari `package-lock.json`.
+3. Jalankan `npm ci` dari `package-lock.json`.
 4. Siapkan `.env` lokal tanpa memasukkan secret ke Git.
 5. Jalankan Laravel migrations ke SQLite.
-6. Buat isolated Python environment untuk `ml/`.
+6. Buat isolated Python 3.13 environment untuk `ml/`.
 7. Install pinned Python training dependencies dari `ml/requirements.txt`.
 8. Generate trusted JSON artifact dari verified dataset atau gunakan artifact aman yang disertakan.
 9. Jalankan PHP/Python tests, parity checks, lint, dan frontend build.
 
 Command final ditulis pada root README setelah implementation tersedia dan benar-benar dijalankan.
+
+Milestone 1 menyediakan setup minimum dan quality commands pada root README. Training dan release commands ditambahkan setelah implementation pemiliknya tersedia.
 
 ## 3. Configuration contract
 
@@ -77,7 +79,7 @@ Karena MVP tidak memiliki authentication, public deployment hanya boleh memakai 
 ## 8. Release checks
 
 1. Composer install berhasil dari lockfile.
-2. NPM install dan Vite production build berhasil dari lockfile.
+2. NPM clean install dan Vite production build berhasil dari lockfile.
 3. Laravel tests dan Pint checks lulus.
 4. Python ML tests dan Ruff checks lulus.
 5. Migration plan direview dan dapat diterapkan pada clean database.

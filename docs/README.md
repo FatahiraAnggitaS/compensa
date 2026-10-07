@@ -44,9 +44,10 @@ Status seluruh dokumen: **Approved with blockers pada 2026-10-07**. Scope dan ke
 
 - Repository memiliki Laravel application skeleton, Composer/NPM lockfiles, Blade, Tailwind/Vite, Pest, dan Pint.
 - Milestone 0 selesai: active synthetic dataset, data contract, cleaning decision, evaluation configuration, publication permission, dan Git planning baseline telah ditetapkan.
+- Milestone 1 selesai secara lokal: runtime baseline, pinned Python environment, safe error pages, Laravel health check, environment example, ignore rules, dan cross-runtime CI workflow tersedia.
 - Responsive UI scaffold, lima GET routes, invokable controllers, shared navigation, dan honest empty states telah tersedia tanpa database.
 - Tombol prediction, persistence, filter berbasis data, dan export tetap nonaktif. Business implementation belum tersedia.
 - Active candidate dataset `data_train/salary_500.csv` dibuat sendiri oleh pemilik project, disetujui untuk public Git, dan profil aktualnya tercatat di `data_train/README.md`. `salary.csv` tetap dikecualikan dari Git sebagai rollback dan bukan training input.
-- Python training code dan JSON model artifact belum tersedia.
+- Python training code dan JSON model artifact belum tersedia; `ml/requirements.txt` baru menetapkan environment untuk Milestone 3.
 - Provenance, publication permission, raw target column `salary`, monthly IDR semantics, integer score scale 0–100, schema, observed range, data completeness, cleaning decision, evaluation strategy, dan file hash sudah ditetapkan. Dataset sintetis yang diisi acak tidak mewakili distribusi gaji dunia nyata.
 - Tidak ada metric model yang boleh ditampilkan sebelum training dan evaluation benar-benar dijalankan.
