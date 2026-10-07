@@ -53,6 +53,9 @@ jobs:
       - name: Install frontend dependencies
         run: npm ci
 
+      - name: Build frontend assets
+        run: npm run build
+
       - name: Check PHP formatting
         run: vendor/bin/pint --test
 
@@ -67,6 +70,3 @@ jobs:
 
       - name: Check Python formatting
         run: python -m ruff format --check ml
-
-      - name: Build frontend assets
-        run: npm run build
