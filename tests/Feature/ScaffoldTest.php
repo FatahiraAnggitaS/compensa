@@ -1,8 +1,11 @@
 <?php
 
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Route;
 
-it('renders the salary prediction scaffold as the root page', function () {
+uses(RefreshDatabase::class);
+
+it('renders the salary prediction form as the root page', function () {
     $this->get(route('salary-predictions.index'))
         ->assertOk()
         ->assertSeeText('Prediksi & kalkulasi gaji')
@@ -12,16 +15,16 @@ it('renders the salary prediction scaffold as the root page', function () {
         ->assertSee('disabled', escape: false);
 });
 
-it('shows the verified synthetic dataset contract without inventing metrics', function () {
+it('shows the trained synthetic model metadata from its artifact', function () {
     $this->get(route('model-information.index'))
         ->assertOk()
-        ->assertSeeText('500 baris terverifikasi')
+        ->assertSeeText('500 baris sintetis')
         ->assertSeeText('salary_500.csv')
-        ->assertSeeText('Dataset sintetis diisi acak')
-        ->assertSeeText('Belum dihitung');
+        ->assertSeeText('Artifact valid')
+        ->assertSeeText('Held-out metrics');
 });
 
-it('renders every MVP scaffold page without database access', function (string $routeName, string $heading) {
+it('renders every MVP page', function (string $routeName, string $heading) {
     $this->get(route($routeName))
         ->assertOk()
         ->assertSee('Compensa')

@@ -11,8 +11,8 @@ Repository aktual adalah Laravel application skeleton:
 - test stack memakai Pest dengan Laravel plugin;
 - PHP formatting memakai Laravel Pint;
 - local development dilayani Laravel Herd;
-- active synthetic dataset `data_train/salary_500.csv` tersedia; Python training
-  code, business implementation, dan model artifact belum tersedia.
+- active synthetic dataset `data_train/salary_500.csv`, offline Python training,
+  committed JSON artifact, Laravel inference, dan BCMath salary calculation tersedia.
 
 ## 2. Keputusan arsitektur
 
@@ -32,6 +32,7 @@ Pendekatan ini mempertahankan Laravel template dan penggunaan Herd tanpa menamba
 | Concern | Pilihan MVP | Status/catatan |
 | --- | --- | --- |
 | Web language | PHP `^8.4` | Selaras dengan Pest 5 dan terverifikasi pada PHP 8.4.25 |
+| Fixed precision | Native BCMath PHP 8.4 | `ext-bcmath`; tanpa package money/decimal tambahan |
 | Web framework | Laravel `^13.17` | Terverifikasi dari `composer.json` |
 | Local web environment | Laravel Herd | Dipilih pemilik project |
 | UI | Blade | Server-rendered |
@@ -48,10 +49,10 @@ Pendekatan ini mempertahankan Laravel template dan penggunaan Herd tanpa menamba
 | PHP format | Laravel Pint | Sudah tersedia |
 | Python lint/format | Ruff | Hanya untuk `ml/` |
 | CSV export | Laravel streamed response | Tanpa package tambahan |
-| Excel export | Direct PhpSpreadsheet integration | Install setelah compatibility verification |
+| Excel export | PhpSpreadsheet `5.10.0` | Direct integration; PHP 8.4 compatible, tanpa Laravel Excel abstraction |
 | PDF | Print stylesheet/browser Save as PDF | Tanpa PDF engine |
 
-Mekanisme fixed-precision salary arithmetic di PHP harus dipilih sebelum salary calculator diimplementasikan. Contract tetap `Decimal(18,2)` dengan `ROUND_HALF_UP`; binary floating-point tidak boleh menjadi authoritative money representation.
+Authoritative salary arithmetic memakai native BCMath PHP 8.4 dengan contract `Decimal(18,2)` dan `ROUND_HALF_UP`; binary floating-point hanya dipakai pada raw Linear Regression inference.
 
 ## 4. Component boundaries
 
@@ -75,6 +76,10 @@ Browser -> Laravel routes/controllers/forms -> JSON predictor -> salary calculat
 
 Tidak ada HTTP boundary antara Laravel dan Python karena Python tidak digunakan saat runtime web.
 
+History membaca immutable salary snapshots dengan eager-loaded employee. Monthly report memakai satu `MonthlyReportService` sebagai canonical record-set query dan row contract untuk HTML, CSV, XLSX, serta print. CSV di-stream langsung; XLSX dibuat dengan PhpSpreadsheet; PDF menggunakan browser Print/Save as PDF tanpa server PDF engine.
+
+Public demo mode adalah configuration boundary Laravel, bukan fork aplikasi. Middleware global menambahkan response security headers; route middleware menolak seluruh employee mutation ketika `APP_PUBLIC_DEMO=true`. Prediction dan reporting tetap memakai service/database contract yang sama, dengan throttling per IP. Target production adalah Laravel Cloud dengan managed Serverless PostgreSQL; Python tidak ada pada runtime production.
+
 ## 5. Target module layout
 
 Struktur ini adalah target implementation. File yang belum ada tidak boleh dianggap sudah tersedia.
@@ -88,6 +93,7 @@ app/
   Services/
     SalaryPredictionService.php
     SalaryCalculator.php
+    SalaryRecordService.php
     MonthlyReportService.php
   Console/Commands/
     SeedDemoData.php
@@ -150,7 +156,7 @@ MVP tidak mendukung learned preprocessing seperti imputation, scaling, categoric
 6. Trainer memisahkan evaluation data sesuai keputusan berbasis data profile.
 7. scikit-learn `LinearRegression` melakukan fit dan evaluation.
 8. Exporter menulis temporary JSON, memvalidasinya, lalu mengganti active artifact file secara atomik.
-9. Python dan PHP parity tests membuktikan formula Laravel cocok dengan reference predictions dalam tolerance yang ditetapkan.
+9. Python/PHP parity tests membuktikan Laravel raw inference cocok dengan tiga Python reference predictions dalam tolerance `0.01` IDR.
 
 Training tidak membaca application database dan tidak memakai user predictions sebagai labels.
 
@@ -159,11 +165,11 @@ Training tidak membaca application database dan tidak memakai user predictions s
 1. Laravel Form Request memvalidasi employee, features, period, work days, dan overtime inputs.
 2. `SalaryPredictionService` membaca fixed trusted JSON artifact.
 3. Service memvalidasi artifact contract sebelum menggunakan nilainya.
-4. Service menghitung `intercept + sum(coefficient[feature] * input[feature])` dengan canonical feature mapping.
+4. Service menghitung `intercept + sum(coefficient[feature] * input[feature])` memakai float agar mengikuti scikit-learn, lalu menolak output non-finite/negative.
 5. Service mendeteksi OOD input dari observed training ranges.
 6. Negative atau non-finite prediction memblokir calculation dan save.
-7. Valid prediction dikonversi ke fixed-precision monetary representation sesuai rounding contract.
-8. `SalaryCalculator` menghitung proration, normal hours, overtime pay, dan estimated total.
+7. Valid prediction dikonversi melalui locale-independent decimal string lalu dibulatkan BCMath `HalfAwayFromZero` menjadi money 2 decimal.
+8. `SalaryCalculator` menghitung proration, normal hours, overtime pay, dan estimated total hanya dengan BCMath.
 9. Eloquent menyimpan immutable salary record dalam satu database transaction.
 
 JSON hanya berasal dari fixed project path. Artifact upload dan arbitrary path input tidak tersedia.
@@ -193,4 +199,4 @@ Forward path:
 4. Tambahkan JSON artifact contract dan cross-language parity proof.
 5. Implementasikan Laravel inference setelah artifact contract lulus.
 
-Rollback dependency foundation dilakukan dengan mengembalikan `composer.json`, `composer.lock`, dan `ml/requirements.txt` ke baseline Git sebelumnya. Belum ada production data atau model artifact yang dimigrasikan. Default Laravel migrations tidak dihapus.
+Rollback dependency foundation dilakukan dengan mengembalikan `composer.json`, `composer.lock`, dan `ml/requirements.txt` ke baseline Git sebelumnya. Artifact aktif dapat diganti dengan artifact committed sebelumnya tanpa memigrasikan application database. Default Laravel migrations tidak dihapus.

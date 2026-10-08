@@ -22,8 +22,10 @@ Jika dataset menggunakan annual, daily, hourly, mixed, non-IDR, atau unknown sal
 
 - Satu salary record terikat pada satu `reporting_month`.
 - `reporting_month` disimpan sebagai hari pertama bulan terpilih.
-- `period_start` dan `period_end` harus berada dalam reporting month yang sama untuk MVP.
-- Cross-month allocation tidak masuk MVP.
+- `reporting_month` adalah bucket laporan/payroll yang dipilih operator, bukan batas tanggal periode kerja.
+- `period_start` dan `period_end` boleh melintasi bulan atau tahun, misalnya 20 September sampai 20 Oktober untuk reporting month Oktober.
+- `period_end` tidak boleh mendahului `period_start`.
+- Sistem tidak memecah atau mengalokasikan satu record otomatis ke beberapa reporting month.
 - Aplikasi tidak mengarang kalender hari kerja atau hari libur.
 - Operator memasukkan `applicable_work_days` dan `worked_days` dari aturan/periode yang berlaku.
 
@@ -71,6 +73,8 @@ Tax, benefits, allowance, deduction, BPJS, dan payroll adjustment tidak masuk fo
 ## 8. Numeric rules
 
 - Gunakan decimal arithmetic untuk semua money dan hour calculation.
+- Implementasi PHP memakai native BCMath 8.4 dan `RoundingMode::HalfAwayFromZero`, ekuivalen `ROUND_HALF_UP` untuk seluruh nilai non-negative pada contract ini.
+- Raw Linear Regression boleh memakai float untuk parity dengan scikit-learn; float berhenti sebelum output menjadi authoritative money.
 - Jangan gunakan JavaScript result sebagai authoritative value.
 - Backend menghitung ulang seluruh derived value.
 - Simpan seluruh monetary fields sebagai `Decimal(18,2)`.
@@ -89,9 +93,11 @@ Tax, benefits, allowance, deduction, BPJS, dan payroll adjustment tidak masuk fo
 - `knowledge_score`, `technical_score`, dan `logical_score` wajib integer 0–100.
 - Input score di luar observed artifact range tetapi masih dalam 0–100 tetap
   valid, memicu OOD warning, dan disimpan dengan `has_ood_input=true`.
-- Date range wajib valid dan berada dalam reporting month.
+- Date range wajib valid dan berurutan; periode boleh melintasi bulan atau tahun.
 - Employee wajib aktif saat record dibuat.
 - Model artifact dan metadata wajib tersedia serta kompatibel.
+- Overtime hours dan rate harus keduanya nol atau keduanya lebih dari nol.
+- Work days tidak dibatasi jumlah hari kalender dalam period; operator tetap menjadi sumber kalender kerja. `worked_days` tidak boleh melebihi `applicable_work_days`.
 
 ## 10. Disclaimer
 

@@ -2,12 +2,96 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\InvalidPredictionException;
+use App\Exceptions\ModelArtifactException;
+use App\Exceptions\SalaryCalculationException;
+use App\Http\Requests\StoreSalaryPredictionRequest;
+use App\Models\Employee;
+use App\Models\SalaryRecord;
+use App\Services\ModelArtifactReader;
+use App\Services\SalaryRecordService;
 use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 
 final class SalaryPredictionController extends Controller
 {
-    public function __invoke(): View
+    public function index(ModelArtifactReader $artifactReader): View
     {
-        return view('salary-predictions.index');
+        $employees = Employee::query()
+            ->where('is_active', true)
+            ->orderBy('employee_code')
+            ->get(['id', 'employee_code', 'full_name']);
+
+        try {
+            $artifact = $artifactReader->read();
+        } catch (ModelArtifactException) {
+            $artifact = null;
+        }
+
+        $featureRanges = [];
+        foreach ($artifact['features'] ?? [] as $feature) {
+            $featureRanges[$feature['name']] = $feature['observed_range'];
+        }
+
+        return view('salary-predictions.index', [
+            'employees' => $employees,
+            'featureRanges' => $featureRanges,
+            'modelAvailable' => $artifact !== null,
+            'canSubmit' => $artifact !== null && $employees->isNotEmpty(),
+        ]);
+    }
+
+    public function store(
+        StoreSalaryPredictionRequest $request,
+        SalaryRecordService $salaryRecordService,
+    ): RedirectResponse {
+        try {
+            $record = $salaryRecordService->create(
+                $request->integer('employee_id'),
+                $request->validated(),
+            );
+        } catch (ModelArtifactException) {
+            return back()
+                ->withInput()
+                ->withErrors(['prediction' => 'Model tidak tersedia atau tidak kompatibel. Jalankan ulang training.']);
+        } catch (InvalidPredictionException) {
+            return back()
+                ->withInput()
+                ->withErrors(['prediction' => 'Model menghasilkan prediksi yang tidak dapat digunakan. Periksa input atau model.']);
+        } catch (SalaryCalculationException) {
+            return back()
+                ->withInput()
+                ->withErrors(['calculation' => 'Hasil kalkulasi tidak valid atau melebihi batas penyimpanan.']);
+        }
+
+        return redirect()
+            ->route('salary-predictions.index')
+            ->with('status', 'Estimasi gaji berhasil dihitung dan disimpan.')
+            ->with('salary_result', $this->resultSnapshot($record));
+    }
+
+    /** @return array<string, mixed> */
+    private function resultSnapshot(SalaryRecord $record): array
+    {
+        return [
+            'id' => $record->id,
+            'employee_code' => $record->employee->employee_code,
+            'employee_name' => $record->employee->full_name,
+            'reporting_month' => $record->reporting_month->format('Y-m'),
+            'period_start' => $record->period_start->format('Y-m-d'),
+            'period_end' => $record->period_end->format('Y-m-d'),
+            'applicable_work_days' => $record->applicable_work_days,
+            'worked_days' => $record->worked_days,
+            'predicted_base_salary' => $record->predicted_base_salary,
+            'calculated_base_salary' => $record->calculated_base_salary,
+            'normal_work_hours' => $record->normal_work_hours,
+            'overtime_hours' => $record->overtime_hours,
+            'overtime_rate' => $record->overtime_rate,
+            'overtime_pay' => $record->overtime_pay,
+            'estimated_total_salary' => $record->estimated_total_salary,
+            'currency_code' => $record->currency_code,
+            'model_version' => $record->model_version,
+            'has_ood_input' => $record->has_ood_input,
+        ];
     }
 }

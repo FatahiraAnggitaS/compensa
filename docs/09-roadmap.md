@@ -37,6 +37,8 @@ Stop condition: project berjalan dari clean local setup. Foundation dependency i
 
 ## Milestone 2: Employee and database slice
 
+Status: **Complete locally**. Additive employee/salary-record migrations, Eloquent contracts, employee list/create/detail/edit, search/status filter/pagination, reversible deactivation, three-record idempotent demo seed, dan focused migration/web/database tests tersedia. Prediction dan salary-record writer tetap belum diaktifkan.
+
 Deliverables:
 
 - Employee dan salary record migrations.
@@ -47,6 +49,11 @@ Deliverables:
 Stop condition: employee lifecycle lulus automated tests tanpa salary prediction.
 
 ## Milestone 3: Reproducible ML slice
+
+Status: **Complete locally**. Strict dataset/hash validation, deterministic
+400/100 training/evaluation, five-fold CV pada training rows, atomic JSON
+artifact, stable model version, parity references, Laravel artifact reader,
+Model Information, CI training step, dan focused tests tersedia.
 
 Deliverables:
 
@@ -59,6 +66,8 @@ Deliverables:
 Stop condition: clean training run menghasilkan artifact, actual metrics, dan finite prediction. Jangan lanjut jika dataset tidak terbukti memakai monthly base salary dalam IDR.
 
 ## Milestone 4: Prediction and salary calculation slice
+
+Status: **Complete locally**. Laravel JSON inference, Python/PHP parity, OOD detection, native BCMath calculation, Form Request validation, active-employee locking, guarded model-version migration, atomic immutable save, Post/Redirect/Get result, dan failure states tersedia.
 
 Deliverables:
 
@@ -73,6 +82,8 @@ Stop condition: valid flow tersimpan; invalid flow tidak menyimpan partial recor
 
 ## Milestone 5: History and reporting slice
 
+Status: **Complete locally (2026-10-08)**.
+
 Deliverables:
 
 - History list/detail dan filters.
@@ -83,7 +94,11 @@ Deliverables:
 
 Stop condition: seluruh format memakai database record set yang sama.
 
+Completion evidence: history list/detail/filter/pagination aktif; monthly HTML, streamed UTF-8 CSV, PhpSpreadsheet XLSX, dan print view memakai canonical `MonthlyReportService` record set; exact totals serta export security/consistency tests lulus.
+
 ## Milestone 6: Portfolio release
+
+Status: **Complete locally / Laravel Cloud deployment-ready (2026-10-08)**. Public demo guardrails, rate limits, security headers, accessibility improvements, dependency audits, screenshot set, license separation, release documentation, dan Laravel Cloud runbook tersedia. Deployment live serta PostgreSQL smoke tetap pending sampai account/environment nyata tersedia.
 
 Deliverables:
 
@@ -95,6 +110,8 @@ Deliverables:
 - Final diff, secret, artifact, dataset license, dan generated-file review.
 
 Stop condition: reviewer dapat memahami dan menjalankan alur tanpa undocumented manual step.
+
+Completion evidence: core flow memakai visual sistem operasional yang tenang dan menjelaskan alur empat tahap; semantic error linkage serta keyboard-safe mobile drawer tersedia; public demo mempertahankan employee read/prediction sambil menolak employee writes; `shell-quote` dipin aman melalui NPM override; CI menjalankan Composer/NPM audit; source MIT dan dataset CC BY 4.0 dipisahkan; enam screenshot non-sensitif tersedia; local release gates dan production-mode SQLite smoke lulus. Tidak ada klaim live deployment.
 
 ## Deferred future improvements
 

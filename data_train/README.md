@@ -2,7 +2,7 @@
 
 ## Status
 
-`salary_500.csv` adalah active candidate training dataset untuk Milestone 0,
+`salary_500.csv` adalah active approved training dataset,
 menggantikan `salary.csv`. Dataset dibuat sendiri oleh pemilik project dan telah
 diizinkan untuk dipublikasikan dalam public Git repository Compensa.
 
@@ -59,13 +59,13 @@ training range tetap dapat diprediksi tetapi wajib diberi OOD warning.
   generation script atau recorded random seed. File committed menjadi source of
   truth yang dapat direproduksi byte-for-byte melalui hash, tetapi proses
   generasinya tidak dapat direproduksi.
-- External license dependency: tidak ada.
+- Dataset license: CC BY 4.0 dengan attribution kepada Fatahira Anggita S.
 - Publication permission: disetujui pemilik project untuk public Git repository
   pada 2026-10-07.
 - Personal/sensitive data: hasil inspeksi hanya menemukan row identifier,
   score, pengalaman, dan salary; tidak ada direct personal identifier.
 - Dataset reuse terms: lihat `data_train/DATASET-NOTICE.md`; source-code MIT
-  License tidak otomatis mencakup dataset.
+  License tidak mencakup dataset.
 
 ## Cleaning and outlier decision
 
@@ -86,3 +86,12 @@ training range tetap dapat diprediksi tetapi wajib diberi OOD warning.
 
 Karena dataset sintetis dan diisi acak, metric hanya menggambarkan fit pada file
 ini dan tidak boleh diklaim sebagai akurasi gaji dunia nyata.
+
+## Active trained artifact
+
+Milestone 3 menghasilkan `artifacts/salary_linear_regression.json` dengan model
+version `sha256:ef4edb1136f434009edc7be50ed2f8cc3dc2dbf1292756d5f33b0311b5ef05c5`.
+Held-out metrics aktual adalah R² `0.9230522017850311`, MAE
+`428562.69967103825` IDR, dan RMSE `509974.4498421641` IDR. Artifact menyimpan
+row identities, fold metrics, coefficients, runtime, limitations, dan parity
+cases lengkap; angka di dokumen ini hanya ringkasan.

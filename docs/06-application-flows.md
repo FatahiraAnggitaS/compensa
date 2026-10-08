@@ -1,5 +1,26 @@
 # Application Flows
 
+## End-to-end core flow
+
+```text
+Employee aktif
+  -> empat feature numerik
+  -> inference dari committed JSON artifact
+  -> predicted monthly base salary
+  -> prorata worked/applicable days
+  -> overtime hours × user-provided rate
+  -> estimated total salary
+  -> transactional immutable salary record
+  -> history/detail
+  -> monthly report -> CSV/XLSX/browser print
+```
+
+Inference hanya memakai empat feature model. Periode, worked days, overtime hours, dan overtime rate tidak masuk ke Linear Regression. Semua kalkulasi salary setelah raw prediction memakai BCMath. Monthly report selalu membaca salary records yang sudah tersimpan dan tidak membaca dataset training.
+
+## Public demo boundary
+
+`APP_PUBLIC_DEMO=false` adalah default local. Saat bernilai `true`, list/detail employee tetap tersedia tetapi create/edit/update/status ditolak HTTP 403 dan aksinya tidak dirender. Prediction tetap menyimpan salary record untuk employee demo aktif. Banner meminta pengunjung hanya memakai data fiktif karena prediction history/report bersifat publik. Prediction dibatasi 10 request/menit/IP; CSV/XLSX/print dibatasi 20 request/menit/IP.
+
 ## 1. Navigation
 
 MVP memiliki lima area:
@@ -16,25 +37,31 @@ Root page membuka Salary Prediction & Calculation agar reviewer langsung masuk c
 
 UI, helper text, validation message, report labels, dan disclaimer memakai Bahasa Indonesia. Code identifiers serta istilah teknis yang lebih natural tetap memakai English.
 
-### Current scaffold state
+### Current implementation state
 
 - Lima halaman tersedia sebagai server-rendered Blade views dengan shared responsive navigation.
 - Salary Prediction menjadi root page dan menampilkan seluruh kelompok input serta result summary.
-- Halaman berbasis data memakai empty state; model metric dan salary value yang belum ada tidak dipalsukan.
-- Semua action yang memerlukan database, artifact, prediction, persistence, filter, atau export tetap disabled.
-- Scaffolding tidak memiliki POST route, Eloquent model, migration, atau database query.
+- Employee Management memakai application database dan telah memiliki lifecycle lengkap.
+- Model Information membaca artifact terverifikasi dan menampilkan model version, dataset, equation, held-out/CV metrics, runtime, serta limitations aktual.
+- Salary Prediction aktif untuk employee aktif. Submit tervalidasi menjalankan inference, BCMath calculation, transaction save, lalu Post/Redirect/Get menampilkan snapshot tersimpan satu kali.
+- Prediction History aktif dengan list newest-first, pagination, employee/month filters, dan immutable detail snapshot.
+- Monthly Report aktif dengan canonical database query, exact selected-record totals, CSV/XLSX exports, serta print-optimized browser PDF workflow.
 
 ## 2. Employee Management
 
 ### List
 
-- Tampilkan employee code, full name, dan active status.
+- Tampilkan employee code, full name, dan active status, diurutkan berdasarkan code ascending.
+- Pencarian case-insensitive memakai code atau name; filter status menerima all, active, atau inactive.
+- Pagination menampilkan 15 employee per halaman.
 
 ### Create/Edit
 
-- Required fields: employee code dan full name.
-- Server memvalidasi unique employee code.
-- Deactivation dipakai untuk employee yang sudah memiliki history.
+- Required fields: employee code dan full name. Employee baru selalu aktif.
+- Code di-trim, dinormalisasi uppercase, divalidasi 3–32 karakter `[A-Z0-9_-]` dengan karakter awal huruf/angka, dan unique untuk seluruh status.
+- Full name di-trim dan dibatasi 150 karakter.
+- Detail menampilkan identity, status, serta timestamp dalam WIB.
+- Deactivation dan reactivation memakai status action eksplisit dengan confirmation. Normal UI tidak memiliki delete action.
 
 ## 3. Salary Prediction & Calculation
 
@@ -48,6 +75,8 @@ Satu server-rendered form dapat dibagi menjadi bagian berikut:
 
 Submit melakukan prediction, calculation, dan save sebagai satu operation. Tidak diperlukan prediction API terpisah untuk MVP.
 
+`reporting_month` menentukan bucket history/report. Rentang kerja bersifat independen dan boleh melintasi bulan atau tahun selama `period_start <= period_end`. Contoh valid: reporting month Oktober dengan periode 20 September–20 Oktober. Sistem tidak membagi record tersebut otomatis ke bulan September dan Oktober.
+
 UI states:
 
 - initial form;
@@ -60,6 +89,8 @@ UI states:
 
 Client validation membantu UX. Server validation tetap authoritative.
 
+Current success behavior memakai Post/Redirect/Get ke root. Flash menyimpan result snapshot untuk satu redirected request sehingga refresh GET tidak mengulang insert. JavaScript hanya menonaktifkan submit button setelah valid submit dimulai.
+
 Ketiga score memakai integer 0–100. Form menjelaskan observed artifact range;
 nilai valid di luar observed range menampilkan extrapolation warning dan tidak
 otomatis ditolak.
@@ -70,6 +101,7 @@ otomatis ditolak.
 - Filter opsional: employee dan reporting month.
 - Detail menunjukkan seluruh stored snapshot, model version, dan OOD warning/flag.
 - Record tidak diedit melalui normal UI. Correction membuat calculation baru.
+- List menampilkan 15 record per halaman dan mempertahankan query filter pada pagination.
 
 ## 5. Monthly Report
 
@@ -119,6 +151,8 @@ Monthly report tidak menampilkan empat model inputs, model version, atau OOD sta
 - User memakai browser Print/Save as PDF.
 - Server-side PDF generator bukan bagian MVP.
 
+Keempat format memakai record set dari `MonthlyReportService` yang sama. CSV menggunakan UTF-8 BOM dan stable technical headers. CSV/XLSX menetralkan text yang diawali formula marker; XLSX menyimpan money/hour/day cells sebagai numeric values.
+
 ## 7. Model Information
 
 Halaman membaca metadata artifact dan menampilkan:
@@ -134,7 +168,7 @@ Halaman membaca metadata artifact dan menampilkan:
 - model version dan training time;
 - limitations dan responsible-use disclaimer.
 
-Jika metadata/artifact belum tersedia, halaman menampilkan status belum dilatih. Halaman tidak menampilkan placeholder metric.
+Jika artifact hilang, malformed, terlalu besar, atau incompatible, halaman tetap HTTP 200 dan menampilkan safe unavailable state plus training command tanpa detail exception. Metric disembunyikan, bukan diganti placeholder atau nilai hardcoded.
 
 ## 8. Accessibility baseline
 

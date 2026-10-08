@@ -13,9 +13,9 @@
 - Target contract: monthly base salary dalam IDR.
 - Overtime tidak termasuk feature.
 
-## 2. Candidate dataset profile
+## 2. Active dataset profile
 
-Active candidate dataset telah tersedia di `data_train/salary_500.csv` dan
+Active training dataset tersedia di `data_train/salary_500.csv` dan
 diprofilkan pada 2026-10-07 tanpa mengubah isinya. File ini menggantikan
 `data_train/salary.csv` sebagai satu-satunya candidate training input. Pemilik
 project menetapkan target sebagai gaji pokok satu bulan dalam IDR serta tiga
@@ -28,12 +28,12 @@ Sebanyak 500 rows diisi secara acak oleh pemilik project tanpa generation script
 atau recorded seed. Dataset bersifat sintetis dan tidak mewakili distribusi gaji
 dunia nyata.
 
-- Active candidate SHA-256: `b4679821670d29104a8b8cf9162005eca7cb728861b13bfaad3fe30ce668ca65`.
+- Active SHA-256: `b4679821670d29104a8b8cf9162005eca7cb728861b13bfaad3fe30ce668ca65`.
 - Format: UTF-8 dengan BOM, semicolon-delimited CSV.
 - Shape: 500 complete data rows dan 6 raw columns.
 - Raw columns: `no`, `knowledge`, `technical`, `logical`, `year_experience`, dan
   `salary`.
-- Candidate mapping: `knowledge` -> `knowledge_score`, `technical` ->
+- Canonical mapping: `knowledge` -> `knowledge_score`, `technical` ->
   `technical_score`, `logical` -> `logical_score`, `year_experience` ->
   `years_of_experience`, dan `salary` -> target.
 - `no` hanya row identifier dan tidak boleh menjadi model feature.
@@ -59,14 +59,24 @@ dalam 0–100 adalah valid OOD input dan wajib menghasilkan warning.
 Detail profile dan outstanding confirmations tersedia di
 `data_train/README.md`.
 
-## 3. Facts generated only during training
+## 3. Verified training result
 
-- Coefficients, intercept, dan model version.
-- Actual train/test row identities setelah deterministic split.
-- R², MAE, RMSE, dan cross-validation distribution.
-- Actual prediction serta parity reference values.
+Milestone 3 telah menjalankan pipeline final terhadap file/hash aktif. Artifact
+`artifacts/salary_linear_regression.json` menjadi source of truth lengkap.
 
-Item tersebut tetap belum diverifikasi sampai Milestone 3 menjalankan training.
+- Model version: `sha256:ef4edb1136f434009edc7be50ed2f8cc3dc2dbf1292756d5f33b0311b5ef05c5`.
+- Fit rows: 400; held-out rows: 100; shuffled split seed 42.
+- Held-out R²: `0.9230522017850311`.
+- Held-out MAE: `428562.69967103825` IDR.
+- Held-out RMSE: `509974.4498421641` IDR.
+- Five-fold training-only CV R²: mean `0.9390388708316598`, population std `0.007437231039150203`.
+- Five-fold training-only CV MAE: mean `385677.24041672144`, population std `17452.5333713403` IDR.
+- Five-fold training-only CV RMSE: mean `468021.68616324477`, population std `19406.219426525724` IDR.
+- Coefficients in canonical order: `-20140.178926530018`, `16241.735811323393`, `18679.748515723913`, dan `1801021.6298378482`.
+- Intercept: `1560783.4509635493`.
+
+Nilai coefficient menjelaskan persamaan fitted pada data sintetis, bukan hubungan
+kausal. Metric ini bukan salary benchmark atau bukti generalisasi dunia nyata.
 
 ## 4. Dataset readiness gate
 
@@ -113,7 +123,7 @@ artifact dan tidak boleh digunakan untuk mengklaim performa dunia nyata.
 - Jika learned preprocessing ternyata diperlukan, training berhenti dan architecture harus direview karena arbitrary scikit-learn pipeline tidak dieksekusi oleh Laravel.
 - Jangan memperbaiki mismatch melalui silent reorder atau default value tersembunyi.
 - Python export memakai ordered canonical feature list; Laravel menghitung berdasarkan names dan menolak missing/extra feature.
-- Cross-language parity tests membandingkan Laravel formula dengan Python reference predictions memakai tolerance yang terdokumentasi.
+- Cross-language parity tests aktif dan membandingkan raw Laravel float inference dengan tiga Python reference predictions memakai absolute tolerance `0.01` IDR.
 
 ## 7. Artifact strategy
 
@@ -142,7 +152,11 @@ Artifact minimal:
 - observed training ranges untuk empat features;
 - safe parity reference cases.
 
-`model_version` berasal dari hash canonical model payload. Web app hanya membaca strict JSON artifact dari fixed trusted project path. User tidak dapat meng-upload atau memilih artifact path.
+`model_version` berasal dari hash canonical model payload yang mencakup contract,
+dataset hash, training-row identities, scikit-learn version, coefficients, dan
+intercept; timestamp tidak ikut hash. Training ulang identik mempertahankan
+version yang sama. Web app hanya membaca strict JSON artifact dari fixed trusted
+project path. User tidak dapat meng-upload atau memilih artifact path.
 
 Satu self-contained file menghindari mismatch antara model dan metadata. Trainer menulis temporary JSON, memvalidasinya, lalu mengganti fixed active filename secara atomik.
 
@@ -155,6 +169,7 @@ Satu self-contained file menghindari mismatch antara model dan metadata. Trainer
 - Sistem tidak clamp prediction ke angka arbitrary.
 - Negative atau nonsensical prediction ditampilkan sebagai model limitation dan tidak disamarkan menjadi salary realistis.
 - Negative prediction memblokir salary calculation dan record save. User dapat memperbaiki input; model/data perlu dievaluasi bila input valid tetap menghasilkan nilai tersebut.
+- Raw Linear Regression memakai float untuk mengikuti scikit-learn. Setelah finite/positive check, output dikonversi ke decimal string dan seluruh authoritative money calculation beralih ke BCMath.
 
 ## 9. Evaluation and claims
 
@@ -173,6 +188,7 @@ Active dataset training command adalah
 `python ml/train.py --dataset data_train/salary_500.csv`. Python dependencies
 dikunci dalam `ml/requirements.txt` untuk Python 3.13. Environment foundation
 memakai scikit-learn 1.9.1, pandas 3.0.6, Ruff 0.16.10, serta exact transitive
-pins yang telah dipasang pada clean virtual environment. Seed 42 sudah menjadi
-evaluation contract; output details dan artifact checks diselesaikan pada
-Milestone 3. Model artifact berubah hanya melalui command tersebut.
+pins yang telah dipasang pada clean virtual environment. Seed 42 digunakan oleh
+train/test split dan five-fold KFold. CLI menolak hash, schema,
+missing/non-finite value, duplicate, format, atau range yang tidak cocok sebelum
+atomic replacement. Model artifact berubah hanya melalui command tersebut.

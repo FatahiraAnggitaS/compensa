@@ -69,7 +69,7 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-009: Work period stays within one reporting month
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Superseded by D-081
 - Decision: `period_start` dan `period_end` wajib berada dalam satu reporting month.
 - Reason: Menjaga monthly report dan proration tetap jelas tanpa automatic period splitting.
 - Consequence: Periode lintas bulan dibuat sebagai calculation terpisah untuk setiap bulan.
@@ -519,7 +519,7 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## D-065: No-data responsive UI scaffold before business implementation
 
 - Date: 2026-10-07
-- Status: Accepted
+- Status: Accepted, amended by D-073
 - Decision: Siapkan lima Blade pages, shared responsive navigation, invokable GET controllers, dan honest empty states sebelum database serta business logic diimplementasikan.
 - Reason: Struktur frontend/backend dan arah visual dapat divalidasi lebih awal tanpa mengarang data, metric, atau hasil prediksi.
 - Consequence: Action prediction, persistence, data filter, dan export disabled; tidak ada POST route, model, migration, query, ataupun fake salary record pada tahap ini.
@@ -583,9 +583,78 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 - Reason: Command wajib membuat employee fiktif secara idempotent. Milestone 1 tidak boleh memperkenalkan business schema sebelum employee/database slice.
 - Consequence: Milestone 1 dapat ditutup tanpa no-op command. Milestone 2 belum selesai sampai command membuat employee demo tanpa salary record atau metric palsu.
 
+## D-073: Employee lifecycle and portable business schema
+
+- Date: 2026-10-07
+- Status: Accepted
+- Decision: Gunakan employee code uppercase 3–32 karakter `[A-Z0-9_-]` dengan karakter awal huruf/angka, full name maksimum 150 karakter, reversible active status, server-rendered list/create/detail/edit flow, case-insensitive search, status filter, dan pagination 15 record. Tambahkan portable additive `employees` serta `salary_records` migrations dan tiga deterministic demo employees.
+- Reason: Contract ini memberikan lifecycle employee yang lengkap tanpa menambah data personal, delete workflow, database-specific CHECK SQL, atau mengaktifkan salary prediction sebelum artifact tersedia.
+- Consequence: Database menegakkan required/unique/foreign-key constraints dan application layer menegakkan format/cross-field rules. Tidak ada delete route; employee code tetap reserved saat nonaktif. `app:seed-demo-data` menyinkronkan dua employee aktif dan satu nonaktif tanpa salary record. Salary cross-field validation tetap Milestone 4.
+
+## D-074: Deterministic 400-row model and committed trusted artifact
+
+- Date: 2026-10-07
+- Status: Accepted
+- Decision: Fit final `LinearRegression` hanya pada 400 deterministic training rows, pertahankan 100 rows sebagai held-out evaluation, dan jalankan five-fold KFold hanya pada training rows. CLI menerima path berbeda tetapi mewajibkan SHA-256 dataset aktif. Commit satu atomic JSON artifact dengan stable model version yang tidak memasukkan training timestamp.
+- Reason: Model yang dievaluasi harus sama dengan model yang dirilis, sementara strict dataset identity dan self-contained artifact menjaga reproducibility tanpa model registry atau Python runtime service.
+- Consequence: Artifact aktif adalah `artifacts/salary_linear_regression.json` dengan model version `sha256:ef4edb1136f434009edc7be50ed2f8cc3dc2dbf1292756d5f33b0311b5ef05c5`. Laravel Milestone 3 hanya memvalidasi dan menampilkan metadata; inference serta PHP/Python parity tetap Milestone 4. Artifact hilang/rusak menghasilkan safe HTTP 200 unavailable state tanpa metric atau exception detail.
+
+## D-075: Native BCMath prediction-to-money boundary
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Gunakan PHP float hanya untuk raw Linear Regression agar cocok dengan scikit-learn. Setelah finite/positive check, ubah output melalui locale-independent decimal string dan gunakan native BCMath PHP 8.4 dengan `HalfAwayFromZero` untuk seluruh authoritative money/hour calculation. Overtime hours/rate harus keduanya nol atau keduanya positif. Work days tidak dibatasi panjang calendar period.
+- Reason: PHP 8.4 project sudah menyediakan BCMath sehingga fixed precision tidak membutuhkan package baru. Batas numeric yang eksplisit menjaga prediction parity dan salary determinism.
+- Consequence: `ext-bcmath` menjadi Composer/CI runtime requirement. `model_version` diperbesar additive menjadi 71 karakter; rollback ke 64 menolak data panjang tanpa truncation. Success memakai Post/Redirect/Get dan JavaScript hanya mencegah double-click. O-007 selesai.
+
+## D-076: Canonical database-backed reports and direct XLSX export
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Prediction History membaca immutable salary records newest-first dengan employee/month filters dan pagination 15. Monthly Report memakai satu canonical `MonthlyReportService` record set untuk HTML, streamed UTF-8 CSV, PhpSpreadsheet `5.10.0` XLSX, dan print view. Summary dihitung dengan BCMath; CSV/XLSX menetralkan formula-like text; XLSX money/hour/day cells tetap numeric.
+- Reason: Satu query/row contract mencegah drift antarformat sekaligus memenuhi reporting MVP tanpa queue, report database, Laravel Excel abstraction, atau server-side PDF engine.
+- Consequence: PHP runtime/CI menyediakan extensions yang diwajibkan PhpSpreadsheet. Report menampilkan seluruh matching snapshots dan selected-record totals; technical ML fields hanya tersedia pada history detail. PDF dibuat melalui browser Print/Save as PDF.
+
+## D-077: Laravel Cloud portfolio deployment target
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Targetkan Laravel Cloud Starter region Singapore dengan smallest hibernating application compute dan Serverless PostgreSQL. Build frontend memakai `npm ci && npm run build`; deploy menjalankan migration, idempotent demo seed, lalu optimize. Production tidak menginstall Python.
+- Reason: Managed Laravel runtime dan database menjaga deployment portfolio sederhana, sedangkan auto-hibernation sesuai traffic demo yang jarang.
+- Consequence: `docs/08-deployment.md` menjadi dashboard runbook. Release dinyatakan deployment-ready, bukan live; PostgreSQL dan public URL smoke tetap pending sampai account aktif. O-006 selesai.
+
+## D-078: Read-only employee boundary for public demo
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Tambahkan `APP_PUBLIC_DEMO`, default `false`. Saat aktif, employee list/detail tetap publik, seluruh employee mutation disembunyikan dan ditolak 403, sedangkan prediction untuk demo employees tetap aktif. Batasi prediction 10/min/IP dan setiap export/print 20/min/IP.
+- Reason: Reviewer tetap dapat mencoba core ML flow tanpa mengizinkan perubahan demo identities atau memperluas scope menjadi authentication.
+- Consequence: Public data wajib fiktif dan banner menjelaskan visibilitas data. Penggunaan data nyata memerlukan authentication, authorization, privacy, serta retention scope baru.
+
+## D-079: Portfolio release accessibility, security, and licensing baseline
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Targetkan WCAG 2.2 AA pada core flow dengan semantic markup dan keyboard-safe drawer tanpa dependency baru; tambahkan defensive response headers; override `shell-quote` ke 1.12.0 dan audit Composer/NPM di CI; lisensikan source dengan MIT dan dataset terpisah dengan CC BY 4.0.
+- Reason: Public portfolio harus dapat ditinjau, aman secara default, serta memiliki reuse terms yang tidak ambigu tanpa menambah infrastructure atau framework.
+- Consequence: Enam screenshot non-sensitif menjadi bagian README. Accessibility mencakup automated markup regression dan manual keyboard/responsive review; bukan klaim external conformance certification.
+
+## D-080: Operational visual language and explicit workflow
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Gunakan visual system yang menyerupai aplikasi operasional internal: system font, neutral palette, flat bordered panels, modest radius, restrained accent, serta sidebar putih. Tampilkan alur empat tahap dan pemisahan dataset/database langsung pada halaman prediction.
+- Reason: Portfolio harus terasa dirancang untuk workflow Compensa, bukan seperti generic AI-generated dashboard; user juga harus memahami konsekuensi setiap input sebelum submit.
+- Consequence: Decorative typography, excessive rounded cards, shadow, serta AI-themed styling dikurangi. Screenshot release diambil ulang setelah perubahan dan core behavior tetap sama.
+
+## D-081: Reporting month is independent from the work-period boundary
+
+- Date: 2026-10-08
+- Status: Accepted
+- Decision: Perlakukan `reporting_month` sebagai bucket laporan/payroll yang dipilih operator. Izinkan `period_start` dan `period_end` melintasi bulan atau tahun selama end tidak mendahului start.
+- Reason: Siklus penggajian organisasi dapat berjalan dari tanggal tertentu pada bulan sebelumnya sampai tanggal yang sama pada bulan laporan, misalnya 20 September–20 Oktober.
+- Consequence: Same-month validator dihapus tanpa perubahan schema atau formula. Satu salary record tetap masuk tepat ke reporting month yang dipilih dan tidak dialokasikan otomatis ke beberapa bulan. D-009 digantikan.
+
 ## Open decisions and blockers
 
-| ID | Decision needed | Blocked work |
-| --- | --- | --- |
-| O-006 | Specific managed PaaS provider | Production database/runtime configuration |
-| O-007 | PHP fixed-precision decimal mechanism | Salary calculator implementation |
+Tidak ada open decision yang menghalangi portfolio release lokal. Deployment account, live URL, dan PostgreSQL smoke adalah pekerjaan operasional pending, bukan keputusan architecture yang terbuka.

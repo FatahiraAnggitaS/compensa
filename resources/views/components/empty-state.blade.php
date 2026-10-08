@@ -2,7 +2,7 @@
 
 <div {{ $attributes->class(['grid min-h-64 place-items-center px-6 py-12 text-center']) }}>
     <div class="max-w-md">
-        <span class="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-slate-100 text-slate-500" aria-hidden="true">
+        <span class="mx-auto mb-4 grid size-12 place-items-center rounded-md border border-slate-200 bg-slate-50 text-slate-500" aria-hidden="true">
             {{ $icon }}
         </span>
         <h2 class="text-base font-semibold text-slate-900">{{ $title }}</h2>

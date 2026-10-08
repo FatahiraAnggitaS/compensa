@@ -1,20 +1,17 @@
-# Dataset Notice
+# Dataset Provenance and License Notice
 
-`salary_500.csv` dibuat sendiri oleh pemilik project Compensa dan tidak berasal
-dari website atau dataset eksternal. Seluruh nilainya merupakan data sintetis
-yang diisi secara acak oleh pemilik project tanpa generation script atau random
-seed yang dapat direproduksi.
+`salary_500.csv` dibuat oleh Fatahira Anggita S untuk project Compensa. Dataset tidak berasal dari website atau dataset eksternal. Seluruh 500 baris merupakan data sintetis yang diisi secara acak tanpa generation script atau random seed yang direkam.
 
-Pada 2026-10-07, pemilik project memberi izin eksplisit untuk menyertakan dan
-mempublikasikan `salary_500.csv` dalam public Git repository project Compensa.
-File yang diperiksa hanya memiliki row identifier, tiga score, pengalaman, dan
-salary; tidak memiliki nama, email, nomor identitas, atau direct personal
-identifier lain.
+File yang diperiksa hanya berisi row identifier, tiga score, pengalaman, dan salary. Tidak ada nama, email, nomor identitas, atau direct personal identifier. Dataset ditujukan untuk demonstrasi portfolio dan pengujian alur training/inference; dataset tidak merepresentasikan distribusi gaji dunia nyata, salary benchmark, atau hubungan faktual antara score, pengalaman, dan gaji.
 
-Dataset ini hanya ditujukan untuk demonstrasi portfolio dan pengujian alur
-training/inference. Dataset tidak mewakili distribusi gaji dunia nyata, salary
-benchmark, atau bukti hubungan faktual antara score, pengalaman, dan gaji.
+## License
 
-Izin ini mendokumentasikan hak publikasi dataset dalam repository ini. Dataset
-tidak otomatis tercakup oleh MIT License source code sampai pemilik project
-menetapkan terms penggunaan ulang dataset secara eksplisit.
+Dataset `salary_500.csv` dilisensikan dengan **Creative Commons Attribution 4.0 International (CC BY 4.0)**.
+
+Attribution yang disarankan:
+
+> Compensa synthetic salary dataset, dibuat oleh Fatahira Anggita S, dilisensikan dengan CC BY 4.0.
+
+License text dan ketentuan lengkap: <https://creativecommons.org/licenses/by/4.0/>.
+
+MIT License pada root repository hanya berlaku untuk source code dan dokumentasi project. MIT License tersebut tidak mencakup dataset ini; penggunaan ulang dataset mengikuti CC BY 4.0.
