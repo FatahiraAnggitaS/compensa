@@ -1,5 +1,8 @@
 * text=auto eol=lf
 
+# The ML contract hashes the dataset bytes; preserve its approved CRLF identity.
+/data_train/salary_500.csv -text
+
 *.blade.php diff=html
 *.css diff=css
 *.html diff=html
