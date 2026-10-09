@@ -19,10 +19,6 @@ final class PredictionHistoryController extends Controller
                 isset($filters['employee_id']),
                 fn ($query) => $query->where('employee_id', $filters['employee_id']),
             )
-            ->when(
-                isset($filters['reporting_month']),
-                fn ($query) => $query->whereDate('reporting_month', $filters['reporting_month'].'-01'),
-            )
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->paginate(15)

@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="Compensa — prediksi dan estimasi gaji berbasis machine learning.">
+        <meta name="description" content="Compensa — prediksi base salary berbasis machine learning.">
 
         <title>@yield('title') — Compensa</title>
 

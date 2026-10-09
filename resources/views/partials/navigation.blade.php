@@ -3,7 +3,6 @@
         ['label' => 'Prediksi Gaji', 'route' => 'salary-predictions.index', 'active' => 'salary-predictions.*', 'icon' => 'sparkles'],
         ['label' => 'Employee', 'route' => 'employees.index', 'active' => 'employees.*', 'icon' => 'users'],
         ['label' => 'Riwayat Prediksi', 'route' => 'prediction-history.index', 'active' => 'prediction-history.*', 'icon' => 'history'],
-        ['label' => 'Laporan Bulanan', 'route' => 'monthly-reports.index', 'active' => 'monthly-reports.*', 'icon' => 'report'],
         ['label' => 'Informasi Model', 'route' => 'model-information.index', 'active' => 'model-information.*', 'icon' => 'model'],
     ];
 @endphp

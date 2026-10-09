@@ -169,10 +169,6 @@
         @apply hidden grid-cols-5 gap-4 border-b border-slate-200 bg-slate-50 px-6 py-3 text-xs font-semibold uppercase tracking-wider text-slate-500 lg:grid;
     }
 
-    .table-shell-report {
-        @apply grid-cols-6;
-    }
-
     .definition-row {
         @apply grid gap-1 py-4 text-sm sm:grid-cols-[11rem_1fr] sm:gap-6;
     }
@@ -195,7 +191,7 @@
     }
 
     .workflow-grid {
-        @apply grid divide-y divide-slate-200 md:grid-cols-4 md:divide-x md:divide-y-0;
+        @apply grid divide-y divide-slate-200 md:grid-cols-3 md:divide-x md:divide-y-0;
     }
 
     .workflow-step {

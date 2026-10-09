@@ -8,10 +8,10 @@ uses(RefreshDatabase::class);
 it('renders the salary prediction form as the root page', function () {
     $this->get(route('salary-predictions.index'))
         ->assertOk()
-        ->assertSeeText('Prediksi & kalkulasi gaji')
+        ->assertSeeText('Prediksi base salary')
         ->assertSee('Knowledge Score')
         ->assertSeeText('Integer 0–100')
-        ->assertSeeText('Hitung & simpan estimasi')
+        ->assertSeeText('Prediksi & simpan hasil')
         ->assertSee('disabled', escape: false);
 });
 
@@ -32,13 +32,21 @@ it('renders every MVP page', function (string $routeName, string $heading) {
 })->with([
     'employee management' => ['employees.index', 'Employee'],
     'prediction history' => ['prediction-history.index', 'Riwayat prediksi'],
-    'monthly report' => ['monthly-reports.index', 'Laporan bulanan'],
     'model information' => ['model-information.index', 'Informasi model'],
 ]);
 
 it('exposes the Laravel health check', function () {
     $this->get('/up')->assertOk();
 });
+
+it('does not expose removed salary calculation and report pages', function (string $path) {
+    $this->get($path)->assertNotFound();
+})->with([
+    '/monthly-report',
+    '/monthly-report/export/csv',
+    '/monthly-report/export/xlsx',
+    '/monthly-report/print',
+]);
 
 it('renders a safe branded not-found page', function () {
     $this->get('/halaman-tidak-ada')

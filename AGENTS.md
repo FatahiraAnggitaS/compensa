@@ -24,8 +24,8 @@ Jangan meminta user mengulang informasi yang sudah tersedia dan masih valid dala
 | Architecture, technology stack, module boundaries, artifact flow | `docs/02-architecture.md` |
 | Models, migrations, constraints, indexes, persistence | `docs/03-database-design.md` |
 | Dataset, training, evaluation, JSON artifact, inference parity | `docs/04-machine-learning.md` |
-| Proration, working hours, overtime, rounding, salary formulas | `docs/05-salary-business-rules.md` |
-| Pages, forms, validation states, history, reports, exports, accessibility | `docs/06-application-flows.md` |
+| Prediction output, OOD detection, rounding | `docs/05-salary-business-rules.md` |
+| Pages, forms, validation states, history, accessibility | `docs/06-application-flows.md` |
 | Test strategy dan quality gates | `docs/07-testing-strategy.md` |
 | Environment, security, release, deployment, rollback | `docs/08-deployment.md` |
 | Implementation order dan milestone stop conditions | `docs/09-roadmap.md` |
@@ -69,8 +69,8 @@ Perubahan berikut wajib memperbarui dokumen terkait dalam task yang sama:
 - architecture atau technology stack;
 - database schema/constraint;
 - dataset, feature, target, preprocessing, evaluation, atau artifact contract;
-- salary/overtime formula dan rounding;
-- UI flow, report, atau export behavior;
+- prediction output, OOD, atau rounding;
+- UI flow atau history behavior;
 - test/quality gate;
 - deployment, security, atau rollback process.
 

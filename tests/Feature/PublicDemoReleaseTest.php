@@ -14,13 +14,6 @@ function publicDemoPredictionPayload(Employee $employee): array
         'technical_score' => 70,
         'logical_score' => 70,
         'years_of_experience' => '1.85',
-        'reporting_month' => '2026-10',
-        'period_start' => '2026-10-01',
-        'period_end' => '2026-10-31',
-        'applicable_work_days' => 22,
-        'worked_days' => 20,
-        'overtime_hours' => '2.50',
-        'overtime_rate' => '50000.00',
     ];
 }
 
@@ -68,7 +61,7 @@ it('rejects every employee mutation in public demo without changing data', funct
         ->and($employee->fresh()->is_active)->toBeTrue();
 });
 
-it('keeps prediction and salary record storage available in public demo', function () {
+it('keeps prediction record storage available in public demo', function () {
     $employee = Employee::factory()->create();
 
     $this->post(route('salary-predictions.store'), publicDemoPredictionPayload($employee))
@@ -95,17 +88,7 @@ it('limits salary prediction posts to ten requests per minute per ip', function 
     $this->post(route('salary-predictions.store'), [])->assertTooManyRequests();
 });
 
-it('limits each report export route to twenty requests per minute per ip', function () {
-    $parameters = ['reporting_month' => '2026-10'];
-
-    for ($attempt = 1; $attempt <= 20; $attempt++) {
-        $this->get(route('monthly-reports.print', $parameters))->assertOk();
-    }
-
-    $this->get(route('monthly-reports.print', $parameters))->assertTooManyRequests();
-});
-
-it('exposes the accessible drawer state and linked salary validation errors', function () {
+it('exposes the accessible drawer state and linked prediction validation errors', function () {
     $this->get(route('salary-predictions.index'))
         ->assertSee('id="mobile-navigation"', escape: false)
         ->assertSee('aria-hidden="true"', escape: false)
@@ -117,8 +100,7 @@ it('exposes the accessible drawer state and linked salary validation errors', fu
         ->toContain('id="salary-error-summary"')
         ->toContain('@error($name) aria-invalid="true" @enderror')
         ->toContain('{{ str_replace(\'_\', \'-\', $name) }}-error')
-        ->toContain('id="reporting-month-error"')
-        ->toContain('id="overtime-rate-error"');
+        ->toContain('id="years-of-experience-error"');
 
     $navigationScript = file_get_contents(resource_path('js/app.js'));
 

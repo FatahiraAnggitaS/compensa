@@ -1,35 +1,20 @@
 # Deployment
 
-## 1. Release status and target
+## 1. Target
 
-Compensa berstatus **complete locally / Laravel Cloud deployment-ready**. Target deployment adalah Laravel Cloud Starter, region Singapore, smallest hibernating application compute, dan Serverless PostgreSQL. Repository belum terhubung ke account/deployment aktif; karena itu live URL dan PostgreSQL smoke test tetap **pending**, bukan dianggap lulus.
+Target adalah Laravel Cloud Starter region Singapore dengan PHP 8.4 dan Serverless PostgreSQL. Live URL dan PostgreSQL smoke masih pending.
 
-Python hanya digunakan untuk offline training. Production membawa fixed trusted JSON artifact dan tidak menginstall Python atau menyimpan model pada writable filesystem.
+Python hanya digunakan untuk offline training. Production membawa committed JSON artifact dan tidak menginstall Python.
 
-## 2. Laravel Cloud dashboard configuration
+## 2. Build dan deploy
 
-### Application
-
-- Connect repository Compensa dan pilih branch release.
-- Region: Singapore.
-- Runtime: PHP 8.4.
-- Compute: smallest hibernating application size pada Starter.
-- Health check path: `/up`.
-- Attach Serverless PostgreSQL; gunakan credentials/environment variables yang di-inject Laravel Cloud.
-
-Required PHP extensions mengikuti Composer/platform checks: BCMath, Ctype, DOM, Fileinfo, Filter, GD, Iconv, Libxml, Mbstring, PDO PostgreSQL, SimpleXML, XML, XMLReader, XMLWriter, ZIP, dan Zlib.
-
-### Build command
+Build:
 
 ```bash
 npm ci && npm run build
 ```
 
-Platform tetap menjalankan Composer install dari `composer.lock`. Production build tidak menjalankan training; `artifacts/salary_linear_regression.json` sudah menjadi release asset.
-
-### Deploy commands
-
-Jalankan berurutan setelah build:
+Deploy:
 
 ```bash
 php artisan migrate --force
@@ -37,89 +22,61 @@ php artisan app:seed-demo-data
 php artisan optimize
 ```
 
-Seed command idempotent dan hanya menyinkronkan tiga employee fiktif. Command tidak membuat salary record atau metric.
-
-### Environment variables
+Environment utama:
 
 ```dotenv
-APP_NAME=Compensa
 APP_ENV=production
 APP_DEBUG=false
-APP_URL=https://<assigned-domain>
-APP_TIMEZONE=UTC
 APP_PUBLIC_DEMO=true
-
 LOG_CHANNEL=stderr
-LOG_LEVEL=warning
 SESSION_DRIVER=database
 SESSION_SECURE_COOKIE=true
 CACHE_STORE=database
 QUEUE_CONNECTION=sync
 ```
 
-`APP_KEY` harus dibuat sebagai secret. Database variables berasal dari attached PostgreSQL resource. Jangan menyimpan `.env`, key, atau database credentials dalam Git.
+## 3. Public demo
 
-Session dan cache memakai tabel database dari default Laravel migrations. Queue tetap synchronous; tidak ada worker, scheduler, Redis, object storage, atau server-side PDF service.
+- Employee list/detail tersedia.
+- Employee mutation disembunyikan dan ditolak 403.
+- Prediction tetap aktif untuk employee demo.
+- Prediction dibatasi 10 request/menit/IP.
+- History bersifat publik; gunakan hanya data fiktif.
+- Response membawa defensive security headers.
 
-## 3. Public demo behavior
+Tanpa authentication, deployment tidak boleh menerima employee atau salary data nyata.
 
-Saat `APP_PUBLIC_DEMO=true`:
+## 4. Artifact
 
-- employee list/detail tetap dapat dibaca;
-- create, edit, update, serta status mutation disembunyikan dan ditolak HTTP 403;
-- prediction tetap dapat dibuat untuk employee aktif hasil demo seed;
-- halaman menampilkan banner bahwa data publik dan wajib fiktif;
-- prediction dibatasi 10 request/menit/IP;
-- CSV/XLSX/print masing-masing dibatasi 20 request/menit/IP.
-
-Response global membawa `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, dan restrictive `Permissions-Policy`. Mode lokal tetap full-write karena default `APP_PUBLIC_DEMO=false`.
-
-Tanpa authentication, deployment tidak boleh menerima data employee nyata. Authentication, authorization, privacy policy, dan retention policy adalah scope baru sebelum penggunaan non-demo.
-
-## 4. Model and static asset delivery
-
-- Artifact berada pada fixed committed path `artifacts/salary_linear_regression.json`.
-- Request tidak menerima upload/path model dan tidak menjalankan Python/training.
-- Laravel memvalidasi schema, contract, model version, finite numbers, dan parity structure sebelum inference.
-- Vite menghasilkan asset production pada build step.
-- CSV di-stream, XLSX dibuat request-time dengan PhpSpreadsheet, dan PDF dibuat melalui browser Print/Save as PDF.
-- Production tidak bergantung pada persistent application filesystem.
+- Fixed path: `artifacts/salary_linear_regression.json`.
+- Request tidak menerima upload/path artifact.
+- Laravel memvalidasi schema, contract, model version, finite values, metrics, dan parity structure.
+- Missing atau incompatible artifact memblokir prediction dengan safe error.
 
 ## 5. Pre-deploy gates
 
-Sebelum membuat deployment:
+1. Composer validate/audit.
+2. NPM audit dan build.
+3. Pest, Pint, Python unittest, dan Ruff.
+4. Training mempertahankan model version dan parity.
+5. SQLite migrate fresh/rollback.
+6. Config, route, dan view cache.
+7. Secret, dataset, artifact, license, dan generated-file review.
 
-1. Composer install/validate/audit dari lockfile lulus.
-2. NPM clean install, high-severity audit, dan production build lulus.
-3. Pest, Pint, Python unittest, serta Ruff lint/format lulus.
-4. Training terhadap verified dataset mempertahankan model version dan PHP/Python parity.
-5. SQLite migrate-fresh/rollback dan production-mode smoke lulus.
-6. Config, route, serta view cache dapat dibangun.
-7. Secret, ignored environment/database, archive dataset, artifact/hash, license, screenshots, dan generated-file diff direview.
+## 6. Smoke checklist
 
-## 6. First deployment smoke checklist
-
-Checklist ini wajib dijalankan pada URL dan PostgreSQL nyata setelah resource tersedia:
-
-- `/up` healthy dan halaman error tidak menampilkan debug trace;
-- public-demo banner tampil;
-- employee list/detail tampil, sedangkan seluruh mutation route memberi 403;
-- satu prediction valid tersimpan dan muncul di history/detail;
-- monthly report, CSV, XLSX, dan print memakai record yang sama;
-- response security headers tersedia;
-- throttle prediction/export menghasilkan 429 setelah batasnya;
-- database tetap ada setelah redeploy/hibernate-wake;
-- log tersedia di stderr tanpa secret atau unnecessary salary input.
-
-Status saat dokumen ini dibuat: **pending — no active Laravel Cloud account/deployment**.
+- `/up` healthy.
+- Employee list/detail tersedia; mutation 403.
+- Prediction valid tersimpan.
+- History list/detail menampilkan hasil yang sama.
+- Invalid input tidak tersimpan.
+- Security headers dan prediction throttle aktif.
+- Database tetap persisten setelah redeploy.
 
 ## 7. Rollback
 
-- Gunakan previous successful application release dan artifact sebagai satu release unit.
-- Jangan rollback migration yang berpotensi truncation tanpa guard/backup.
-- Serverless PostgreSQL backup/restore mengikuti fasilitas Laravel Cloud dan harus diverifikasi sebelum menyimpan state non-demo.
-- Setelah rollback, jalankan `/up`, prediction read path, history, dan report smoke.
+Gunakan previous application release dan artifact sebagai satu unit. Nullable legacy-field migration menolak rollback bila pure prediction records tersedia. Backup database sebelum schema rollback.
 
-## 8. Infrastructure intentionally excluded
+## 8. Excluded infrastructure
 
-MVP tidak menambah Dockerfile, worker, scheduler, Redis, queue service, object storage, model service, filesystem persistence, ataupun server-side PDF engine. Penambahan komponen hanya dilakukan saat requirement baru membuktikan kebutuhannya.
+Tidak ada Dockerfile, worker, scheduler, Redis, queue service, object storage, model service, report service, atau server-side PDF engine.

@@ -655,6 +655,14 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 - Reason: Siklus penggajian organisasi dapat berjalan dari tanggal tertentu pada bulan sebelumnya sampai tanggal yang sama pada bulan laporan, misalnya 20 September–20 Oktober.
 - Consequence: Same-month validator dihapus tanpa perubahan schema atau formula. Satu salary record tetap masuk tepat ke reporting month yang dipilih dan tidak dialokasikan otomatis ke beberapa bulan. D-009 digantikan.
 
+## D-082: Reduce Compensa to pure salary prediction
+
+- Date: 2026-10-09
+- Status: Accepted; supersedes salary-calculation and reporting portions of D-004, D-005, D-006, D-007, D-009, D-016, D-019, D-075, D-076, and D-081, plus the stale screenshot set from D-079
+- Decision: Compensa hanya menerima employee serta empat model features, menghasilkan predicted monthly base salary, dan menyimpan prediction history. Hapus periode kerja, prorata, jam kerja, lembur, estimated total salary, monthly report, dan exports dari aplikasi aktif.
+- Reason: Pemilik project menetapkan Compensa sebagai web prediksi, bukan salary calculation atau payroll application.
+- Consequence: Prediction writer hanya mengisi active prediction fields. Existing calculation columns tetap nullable sebagai compatibility layer agar data lama tidak dihapus. Rollback ditolak bila pure prediction rows membuat legacy required schema tidak valid. PhpSpreadsheet, seluruh report surface, dan screenshot flow lama dihapus.
+
 ## Open decisions and blockers
 
 Tidak ada open decision yang menghalangi portfolio release lokal. Deployment account, live URL, dan PostgreSQL smoke adalah pekerjaan operasional pending, bukan keputusan architecture yang terbuka.

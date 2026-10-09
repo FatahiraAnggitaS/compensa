@@ -33,25 +33,12 @@ it('smokes the complete public portfolio flow with production-safe configuration
         'technical_score' => 70,
         'logical_score' => 70,
         'years_of_experience' => '1.85',
-        'reporting_month' => '2026-10',
-        'period_start' => '2026-10-01',
-        'period_end' => '2026-10-31',
-        'applicable_work_days' => 22,
-        'worked_days' => 20,
-        'overtime_hours' => '2.50',
-        'overtime_rate' => '50000.00',
     ])->assertRedirect(route('salary-predictions.index'));
 
     $record = SalaryRecord::query()->sole();
 
     $this->get(route('prediction-history.index'))->assertOk()->assertSeeText('DEMO-001');
-    $this->get(route('prediction-history.show', $record))->assertOk()->assertSeeText('Rp 5.605.059,76');
-
-    $query = ['reporting_month' => '2026-10'];
-    $this->get(route('monthly-reports.index', $query))->assertOk()->assertSeeText('DEMO-001');
-    $this->get(route('monthly-reports.csv', $query))->assertOk()->assertDownload();
-    $this->get(route('monthly-reports.xlsx', $query))->assertOk()->assertDownload();
-    $this->get(route('monthly-reports.print', $query))->assertOk()->assertSeeText('DEMO-001');
+    $this->get(route('prediction-history.show', $record))->assertOk()->assertSeeText('Rp 6.028.065,74');
 
     $this->get('/route-that-does-not-exist')
         ->assertNotFound()

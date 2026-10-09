@@ -3,7 +3,6 @@
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeStatusController;
 use App\Http\Controllers\ModelInformationController;
-use App\Http\Controllers\MonthlyReportController;
 use App\Http\Controllers\PredictionHistoryController;
 use App\Http\Controllers\SalaryPredictionController;
 use Illuminate\Support\Facades\Route;
@@ -24,10 +23,4 @@ Route::get('/employees', [EmployeeController::class, 'index'])->name('employees.
 Route::get('/employees/{employee}', [EmployeeController::class, 'show'])->name('employees.show');
 Route::get('/prediction-history', [PredictionHistoryController::class, 'index'])->name('prediction-history.index');
 Route::get('/prediction-history/{salaryRecord}', [PredictionHistoryController::class, 'show'])->name('prediction-history.show');
-Route::get('/monthly-report', [MonthlyReportController::class, 'index'])->name('monthly-reports.index');
-Route::middleware('throttle:20,1')->group(function (): void {
-    Route::get('/monthly-report/export/csv', [MonthlyReportController::class, 'csv'])->name('monthly-reports.csv');
-    Route::get('/monthly-report/export/xlsx', [MonthlyReportController::class, 'xlsx'])->name('monthly-reports.xlsx');
-    Route::get('/monthly-report/print', [MonthlyReportController::class, 'printView'])->name('monthly-reports.print');
-});
 Route::get('/model-information', ModelInformationController::class)->name('model-information.index');

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\InvalidPredictionException;
 use App\Exceptions\ModelArtifactException;
-use App\Exceptions\SalaryCalculationException;
 use App\Http\Requests\StoreSalaryPredictionRequest;
 use App\Models\Employee;
 use App\Models\SalaryRecord;
@@ -58,10 +57,6 @@ final class SalaryPredictionController extends Controller
             return back()
                 ->withInput()
                 ->withErrors(['prediction' => 'Model menghasilkan prediksi yang tidak dapat digunakan. Periksa input atau model.']);
-        } catch (SalaryCalculationException) {
-            return back()
-                ->withInput()
-                ->withErrors(['calculation' => 'Hasil kalkulasi tidak valid atau melebihi batas penyimpanan.']);
         }
 
         return redirect()
@@ -77,18 +72,7 @@ final class SalaryPredictionController extends Controller
             'id' => $record->id,
             'employee_code' => $record->employee->employee_code,
             'employee_name' => $record->employee->full_name,
-            'reporting_month' => $record->reporting_month->format('Y-m'),
-            'period_start' => $record->period_start->format('Y-m-d'),
-            'period_end' => $record->period_end->format('Y-m-d'),
-            'applicable_work_days' => $record->applicable_work_days,
-            'worked_days' => $record->worked_days,
             'predicted_base_salary' => $record->predicted_base_salary,
-            'calculated_base_salary' => $record->calculated_base_salary,
-            'normal_work_hours' => $record->normal_work_hours,
-            'overtime_hours' => $record->overtime_hours,
-            'overtime_rate' => $record->overtime_rate,
-            'overtime_pay' => $record->overtime_pay,
-            'estimated_total_salary' => $record->estimated_total_salary,
             'currency_code' => $record->currency_code,
             'model_version' => $record->model_version,
             'has_ood_input' => $record->has_ood_input,

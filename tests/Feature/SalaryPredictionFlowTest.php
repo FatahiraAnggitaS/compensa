@@ -16,17 +16,10 @@ function validSalaryPredictionPayload(Employee $employee): array
         'technical_score' => 70,
         'logical_score' => 70,
         'years_of_experience' => '1.85',
-        'reporting_month' => '2026-10',
-        'period_start' => '2026-10-01',
-        'period_end' => '2026-10-31',
-        'applicable_work_days' => 22,
-        'worked_days' => 20,
-        'overtime_hours' => '2.50',
-        'overtime_rate' => '50000.00',
     ];
 }
 
-it('renders an enabled form with active employees and artifact ranges', function () {
+it('renders an enabled pure prediction form with active employees and artifact ranges', function () {
     $active = Employee::factory()->create(['employee_code' => 'ACTIVE-01']);
     $inactive = Employee::factory()->create(['employee_code' => 'INACTIVE-01', 'is_active' => false]);
 
@@ -34,7 +27,9 @@ it('renders an enabled form with active employees and artifact ranges', function
         ->assertOk()
         ->assertSeeText($active->employee_code)
         ->assertDontSeeText($inactive->employee_code)
-        ->assertSeeText('Observed 40–90')
+        ->assertSeeText('Rentang training 40–90')
+        ->assertDontSeeText('lembur')
+        ->assertDontSee('name="reporting_month"', escape: false)
         ->assertSee('data-submit-once', escape: false)
         ->assertSee('action="'.route('salary-predictions.store').'"', escape: false);
 });
@@ -54,7 +49,7 @@ it('disables the form when no active employee or artifact is available', functio
         ->assertSee('disabled', escape: false);
 });
 
-it('predicts, calculates, stores one snapshot, and shows a one-request result', function () {
+it('predicts and stores one immutable result without salary calculation fields', function () {
     $employee = Employee::factory()->create(['employee_code' => 'EMP-PRG']);
 
     $response = $this->post(route('salary-predictions.store'), validSalaryPredictionPayload($employee));
@@ -66,12 +61,11 @@ it('predicts, calculates, stores one snapshot, and shows a one-request result', 
     $record = SalaryRecord::query()->sole();
     expect($record)
         ->employee_id->toBe($employee->id)
-        ->reporting_month->format('Y-m-d')->toBe('2026-10-01')
         ->predicted_base_salary->toBe('6028065.74')
-        ->normal_work_hours->toBe('160.00')
-        ->overtime_pay->toBe('125000.00')
         ->model_version->toMatch('/^sha256:[0-9a-f]{64}$/')
-        ->has_ood_input->toBeFalse();
+        ->has_ood_input->toBeFalse()
+        ->and($record->getRawOriginal('reporting_month'))->toBeNull()
+        ->and($record->getRawOriginal('overtime_hours'))->toBeNull();
 
     $this->get(route('salary-predictions.index'))
         ->assertOk()
@@ -79,9 +73,7 @@ it('predicts, calculates, stores one snapshot, and shows a one-request result', 
         ->assertSeeText('EMP-PRG')
         ->assertSeeText('Rp 6.028.065,74');
 
-    $this->get(route('salary-predictions.index'))
-        ->assertOk()
-        ->assertDontSeeText('Tersimpan');
+    $this->get(route('salary-predictions.index'))->assertOk()->assertDontSeeText('Tersimpan');
     expect(SalaryRecord::query()->count())->toBe(1);
 });
 
@@ -93,36 +85,10 @@ it('stores valid OOD input and displays an extrapolation warning', function () {
     $this->post(route('salary-predictions.store'), $payload)->assertRedirect();
 
     expect(SalaryRecord::query()->sole()->has_ood_input)->toBeTrue();
-    $this->get(route('salary-predictions.index'))
-        ->assertSeeText('feature berada di luar observed range');
+    $this->get(route('salary-predictions.index'))->assertSeeText('di luar rentang data training');
 });
 
-it('accepts a work period that crosses calendar boundaries while keeping its reporting month', function (
-    string $reportingMonth,
-    string $periodStart,
-    string $periodEnd,
-) {
-    $employee = Employee::factory()->create();
-    $payload = array_replace(validSalaryPredictionPayload($employee), [
-        'reporting_month' => $reportingMonth,
-        'period_start' => $periodStart,
-        'period_end' => $periodEnd,
-    ]);
-
-    $this->post(route('salary-predictions.store'), $payload)
-        ->assertRedirect(route('salary-predictions.index'))
-        ->assertSessionHasNoErrors();
-
-    $record = SalaryRecord::query()->sole();
-    expect($record->reporting_month->format('Y-m'))->toBe($reportingMonth)
-        ->and($record->period_start->format('Y-m-d'))->toBe($periodStart)
-        ->and($record->period_end->format('Y-m-d'))->toBe($periodEnd);
-})->with([
-    'cross month payroll cycle' => ['2026-10', '2026-09-20', '2026-10-20'],
-    'cross year payroll cycle' => ['2027-01', '2026-12-20', '2027-01-20'],
-]);
-
-it('rejects invalid salary input without saving', function (array $changes, array $errors) {
+it('rejects invalid model input without saving', function (array $changes, array $errors) {
     $employee = Employee::factory()->create();
 
     $this->post(
@@ -134,23 +100,18 @@ it('rejects invalid salary input without saving', function (array $changes, arra
 })->with([
     'score outside contract' => [['knowledge_score' => 101], ['knowledge_score']],
     'experience precision' => [['years_of_experience' => '1.234'], ['years_of_experience']],
-    'end before start' => [['period_end' => '2026-09-30'], ['period_end']],
-    'worked exceeds applicable' => [['worked_days' => 23], ['worked_days']],
-    'overtime hours without rate' => [['overtime_rate' => '0'], ['overtime_hours']],
-    'overtime rate without hours' => [['overtime_hours' => '0'], ['overtime_hours']],
+    'missing feature' => [['logical_score' => null], ['logical_score']],
 ]);
 
 it('rejects inactive employees and unavailable artifacts without saving', function () {
     $employee = Employee::factory()->create(['is_active' => false]);
     $payload = validSalaryPredictionPayload($employee);
 
-    $this->post(route('salary-predictions.store'), $payload)
-        ->assertSessionHasErrors(['employee_id']);
+    $this->post(route('salary-predictions.store'), $payload)->assertSessionHasErrors(['employee_id']);
 
     $employee->update(['is_active' => true]);
     config()->set('ml.artifact_path', sys_get_temp_dir().'/missing-compensa-model.json');
-    $this->post(route('salary-predictions.store'), $payload)
-        ->assertSessionHasErrors(['prediction']);
+    $this->post(route('salary-predictions.store'), $payload)->assertSessionHasErrors(['prediction']);
 
     expect(SalaryRecord::query()->count())->toBe(0);
 });
@@ -175,8 +136,7 @@ it('blocks a negative model prediction without saving', function () {
     ]);
 
     try {
-        $this->post(route('salary-predictions.store'), $payload)
-            ->assertSessionHasErrors(['prediction']);
+        $this->post(route('salary-predictions.store'), $payload)->assertSessionHasErrors(['prediction']);
     } finally {
         unlink($path);
     }
@@ -184,7 +144,7 @@ it('blocks a negative model prediction without saving', function () {
     expect(SalaryRecord::query()->count())->toBe(0);
 });
 
-it('rolls back when the salary record insert fails', function () {
+it('rolls back when prediction record insert fails', function () {
     $employee = Employee::factory()->create();
     SalaryRecord::creating(function (): void {
         throw new RuntimeException('simulated insert failure');

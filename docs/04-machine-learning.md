@@ -168,8 +168,8 @@ Satu self-contained file menghindari mismatch antara model dan metadata. Trainer
 - Input di luar observed training range tetap dapat dihitung oleh Linear Regression. UI wajib memberi extrapolation warning dan saved record menyimpan OOD flag.
 - Sistem tidak clamp prediction ke angka arbitrary.
 - Negative atau nonsensical prediction ditampilkan sebagai model limitation dan tidak disamarkan menjadi salary realistis.
-- Negative prediction memblokir salary calculation dan record save. User dapat memperbaiki input; model/data perlu dievaluasi bila input valid tetap menghasilkan nilai tersebut.
-- Raw Linear Regression memakai float untuk mengikuti scikit-learn. Setelah finite/positive check, output dikonversi ke decimal string dan seluruh authoritative money calculation beralih ke BCMath.
+- Negative prediction memblokir prediction record save. User dapat memperbaiki input; model/data perlu dievaluasi bila input valid tetap menghasilkan nilai tersebut.
+- Raw Linear Regression memakai float untuk mengikuti scikit-learn. Setelah finite/positive check, output dikonversi ke decimal string dan dibulatkan menjadi money dua desimal memakai BCMath.
 
 ## 9. Evaluation and claims
 

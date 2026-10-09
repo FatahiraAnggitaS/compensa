@@ -2,7 +2,6 @@
 
 use App\Models\Employee;
 use App\Models\SalaryRecord;
-use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
@@ -63,38 +62,26 @@ it('normalizes codes for every eloquent write and enforces database uniqueness',
     ]))->toThrow(QueryException::class);
 });
 
-it('stores salary snapshot casts and relationships without calculation logic', function () {
+it('stores prediction snapshot casts and relationships without calculation fields', function () {
     $employee = Employee::factory()->create();
 
     $record = SalaryRecord::query()->create([
         'employee_id' => $employee->id,
-        'reporting_month' => '2026-10-01',
-        'period_start' => '2026-10-01',
-        'period_end' => '2026-10-31',
         'knowledge_score' => 80,
         'technical_score' => 75,
         'logical_score' => 78,
         'years_of_experience' => '3.50',
         'predicted_base_salary' => '8500000.25',
-        'applicable_work_days' => 22,
-        'worked_days' => 20,
-        'normal_work_hours' => '160.00',
-        'calculated_base_salary' => '7727272.95',
-        'overtime_hours' => '2.50',
-        'overtime_rate' => '50000.00',
-        'overtime_pay' => '125000.00',
-        'estimated_total_salary' => '7852272.95',
         'currency_code' => 'IDR',
         'model_version' => str_repeat('a', 64),
         'has_ood_input' => true,
     ]);
 
     expect($record)
-        ->reporting_month->toBeInstanceOf(CarbonImmutable::class)
         ->years_of_experience->toBe('3.50')
         ->predicted_base_salary->toBe('8500000.25')
-        ->overtime_hours->toBe('2.50')
         ->has_ood_input->toBeTrue()
+        ->and($record->getRawOriginal('overtime_hours'))->toBeNull()
         ->and($record->employee->is($employee))->toBeTrue()
         ->and($employee->salaryRecords()->sole()->is($record))->toBeTrue();
 });
@@ -104,22 +91,11 @@ it('protects employees referenced by salary records from deletion', function () 
 
     SalaryRecord::query()->create([
         'employee_id' => $employee->id,
-        'reporting_month' => '2026-10-01',
-        'period_start' => '2026-10-01',
-        'period_end' => '2026-10-31',
         'knowledge_score' => 80,
         'technical_score' => 75,
         'logical_score' => 78,
         'years_of_experience' => '3.50',
         'predicted_base_salary' => '8500000.00',
-        'applicable_work_days' => 22,
-        'worked_days' => 22,
-        'normal_work_hours' => '176.00',
-        'calculated_base_salary' => '8500000.00',
-        'overtime_hours' => '0.00',
-        'overtime_rate' => '0.00',
-        'overtime_pay' => '0.00',
-        'estimated_total_salary' => '8500000.00',
         'currency_code' => 'IDR',
         'model_version' => str_repeat('b', 64),
         'has_ood_input' => false,

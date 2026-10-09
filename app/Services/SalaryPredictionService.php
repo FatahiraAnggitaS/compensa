@@ -8,6 +8,8 @@ use RoundingMode;
 
 final class SalaryPredictionService
 {
+    private const MAX_MONEY = '9999999999999999.99';
+
     public function __construct(private readonly ModelArtifactReader $artifactReader) {}
 
     /**
@@ -52,7 +54,7 @@ final class SalaryPredictionService
         }
 
         $roundedPrediction = bcround($predictionString, 2, RoundingMode::HalfAwayFromZero);
-        if (bccomp($roundedPrediction, SalaryCalculator::MAX_MONEY, 2) === 1) {
+        if (bccomp($roundedPrediction, self::MAX_MONEY, 2) === 1) {
             throw new InvalidPredictionException('The model prediction exceeds the storage limit.');
         }
 

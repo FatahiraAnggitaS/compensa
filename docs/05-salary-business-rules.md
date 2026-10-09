@@ -1,104 +1,48 @@
-# Salary Business Rules
+# Prediction Rules
 
-## 1. Required terminology
+## 1. Output contract
 
-- `predicted_base_salary`: base salary estimate dari model yang sudah mengikuti monetary rounding rule.
-- `applicable_work_days`: jumlah hari kerja yang berlaku pada reporting period menurut input operator.
-- `worked_days`: jumlah hari kerja employee dalam period.
-- `normal_work_hours`: jam kerja normal berdasarkan worked days.
-- `calculated_base_salary`: predicted base salary setelah prorata.
-- `overtime_pay`: hasil overtime hours dikali overtime rate.
-- `estimated_total_salary`: calculated base salary ditambah overtime pay.
+`predicted_base_salary` adalah estimasi monthly base salary dalam IDR dari model terlatih. Nilai ini satu-satunya salary output aplikasi.
 
-Semua label UI harus memakai kata “predicted” atau “estimated”.
+Compensa tidak menghitung periode kerja, prorata, jam kerja, lembur, allowance, deduction, pajak, BPJS, atau total payroll.
 
-## 2. Salary target prerequisite
+## 2. Input contract
 
-Target contract MVP adalah base salary untuk satu calendar month dalam IDR. Dataset harus membuktikan bahwa target memenuhi contract tersebut.
+- `knowledge_score`: integer 0–100.
+- `technical_score`: integer 0–100.
+- `logical_score`: integer 0–100.
+- `years_of_experience`: numeric non-negative, maksimal 2 desimal, batas request 999.99.
+- Employee wajib aktif saat request dan diperiksa ulang dalam transaction.
 
-Jika dataset menggunakan annual, daily, hourly, mixed, non-IDR, atau unknown salary, integration berhenti. Conversion tidak dilakukan tanpa perubahan requirement yang disetujui.
-
-## 3. Reporting period
-
-- Satu salary record terikat pada satu `reporting_month`.
-- `reporting_month` disimpan sebagai hari pertama bulan terpilih.
-- `reporting_month` adalah bucket laporan/payroll yang dipilih operator, bukan batas tanggal periode kerja.
-- `period_start` dan `period_end` boleh melintasi bulan atau tahun, misalnya 20 September sampai 20 Oktober untuk reporting month Oktober.
-- `period_end` tidak boleh mendahului `period_start`.
-- Sistem tidak memecah atau mengalokasikan satu record otomatis ke beberapa reporting month.
-- Aplikasi tidak mengarang kalender hari kerja atau hari libur.
-- Operator memasukkan `applicable_work_days` dan `worked_days` dari aturan/periode yang berlaku.
-
-## 4. Normal working hours
-
-Jam kerja normal ditetapkan 8 jam per hari.
+## 3. Model equation
 
 ```text
-normal_work_hours = worked_days * 8
+raw_prediction = intercept + sum(coefficient[feature] * input[feature])
 ```
 
-Nilai ini untuk reporting. Nilai ini bukan feature model.
+Feature order wajib sama dengan artifact. Output non-finite, nol, negatif, atau lebih besar dari `Decimal(18,2)` ditolak.
 
-## 5. Base salary proration
+## 4. Rounding
+
+Raw Linear Regression memakai float untuk parity dengan scikit-learn. Output lalu dikonversi melalui locale-independent string dan dibulatkan ke dua desimal memakai BCMath `RoundingMode::HalfAwayFromZero`.
 
 ```text
-work_ratio = worked_days / applicable_work_days
-calculated_base_salary = predicted_base_salary * work_ratio
+predicted_base_salary = round_half_up(raw_prediction, 2)
 ```
 
-Jika `worked_days == applicable_work_days`, calculated base salary sama dengan predicted base salary.
+Browser tidak menghitung hasil authoritative.
 
-Validation wajib memastikan applicable work days lebih dari nol dan worked days tidak melebihi applicable work days.
+## 5. OOD
 
-## 6. Overtime
+Observed ranges dari artifact:
 
-Overtime rate tidak dihitung oleh formula turunan. Operator memasukkan tarif per jam secara langsung.
+- Knowledge: 40–90.
+- Technical: 50–90.
+- Logical: 50–90.
+- Years of Experience: 0–3.7.
 
-```text
-overtime_pay = overtime_hours * overtime_rate
-```
+Input valid di luar observed range tetap diprediksi dan disimpan dengan `has_ood_input=true`. UI menampilkan warning bahwa hasil merupakan ekstrapolasi dan dapat kurang andal.
 
-Jika tidak ada overtime, overtime hours dan overtime rate bernilai nol. Overtime tidak mengubah predicted atau calculated base salary.
+## 6. Disclaimer
 
-Overtime hours menerima decimal sampai 2 angka di belakang koma. Sistem tidak memaksa interval 0,5 jam atau pembulatan jam tertentu.
-
-## 7. Estimated total
-
-```text
-estimated_total_salary = calculated_base_salary + overtime_pay
-```
-
-Tax, benefits, allowance, deduction, BPJS, dan payroll adjustment tidak masuk formula.
-
-## 8. Numeric rules
-
-- Gunakan decimal arithmetic untuk semua money dan hour calculation.
-- Implementasi PHP memakai native BCMath 8.4 dan `RoundingMode::HalfAwayFromZero`, ekuivalen `ROUND_HALF_UP` untuk seluruh nilai non-negative pada contract ini.
-- Raw Linear Regression boleh memakai float untuk parity dengan scikit-learn; float berhenti sebelum output menjadi authoritative money.
-- Jangan gunakan JavaScript result sebagai authoritative value.
-- Backend menghitung ulang seluruh derived value.
-- Simpan seluruh monetary fields sebagai `Decimal(18,2)`.
-- Ubah model output ke decimal melalui string representation, lalu quantize ke 2 decimal dengan `ROUND_HALF_UP` sebagai `predicted_base_salary`.
-- Hitung dan quantize `calculated_base_salary` serta `overtime_pay` ke 2 decimal dengan `ROUND_HALF_UP`.
-- Hitung `estimated_total_salary` dari dua stored rounded components agar detail dan total selalu konsisten.
-- UI dan exports menampilkan IDR dengan 2 decimal.
-- Jangan silently clamp negative model output. Tampilkan warning lalu blokir calculation dan save.
-- Jangan menerima NaN atau infinity.
-
-## 9. Input validation
-
-- Empat model features wajib numeric dan finite.
-- `years_of_experience`, worked days, overtime hours, dan overtime rate tidak boleh negatif.
-- `years_of_experience` menerima decimal sampai 2 angka di belakang koma; valid range tetap mengikuti dataset metadata.
-- `knowledge_score`, `technical_score`, dan `logical_score` wajib integer 0–100.
-- Input score di luar observed artifact range tetapi masih dalam 0–100 tetap
-  valid, memicu OOD warning, dan disimpan dengan `has_ood_input=true`.
-- Date range wajib valid dan berurutan; periode boleh melintasi bulan atau tahun.
-- Employee wajib aktif saat record dibuat.
-- Model artifact dan metadata wajib tersedia serta kompatibel.
-- Overtime hours dan rate harus keduanya nol atau keduanya lebih dari nol.
-- Work days tidak dibatasi jumlah hari kalender dalam period; operator tetap menjadi sumber kalender kerja. `worked_days` tidak boleh melebihi `applicable_work_days`.
-
-## 10. Disclaimer
-
-UI wajib menjelaskan bahwa hasil bergantung pada dataset, feature, dan linear model. Hasil bukan standar salary pasar, hak kompensasi, atau rekomendasi keputusan HR.
+Dataset bersifat sintetis. Prediction bukan standar gaji pasar, hak kompensasi, atau rekomendasi keputusan HR.
