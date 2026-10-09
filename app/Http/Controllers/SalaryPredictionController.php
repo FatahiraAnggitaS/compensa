@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exceptions\InvalidPredictionException;
 use App\Exceptions\ModelArtifactException;
 use App\Http\Requests\StoreSalaryPredictionRequest;
-use App\Models\Employee;
 use App\Models\SalaryRecord;
 use App\Services\ModelArtifactReader;
 use App\Services\SalaryRecordService;
@@ -16,11 +15,6 @@ final class SalaryPredictionController extends Controller
 {
     public function index(ModelArtifactReader $artifactReader): View
     {
-        $employees = Employee::query()
-            ->where('is_active', true)
-            ->orderBy('employee_code')
-            ->get(['id', 'employee_code', 'full_name']);
-
         try {
             $artifact = $artifactReader->read();
         } catch (ModelArtifactException) {
@@ -33,10 +27,9 @@ final class SalaryPredictionController extends Controller
         }
 
         return view('salary-predictions.index', [
-            'employees' => $employees,
             'featureRanges' => $featureRanges,
             'modelAvailable' => $artifact !== null,
-            'canSubmit' => $artifact !== null && $employees->isNotEmpty(),
+            'canSubmit' => $artifact !== null,
         ]);
     }
 
@@ -45,10 +38,7 @@ final class SalaryPredictionController extends Controller
         SalaryRecordService $salaryRecordService,
     ): RedirectResponse {
         try {
-            $record = $salaryRecordService->create(
-                $request->integer('employee_id'),
-                $request->validated(),
-            );
+            $record = $salaryRecordService->create($request->validated());
         } catch (ModelArtifactException) {
             return back()
                 ->withInput()
@@ -70,8 +60,7 @@ final class SalaryPredictionController extends Controller
     {
         return [
             'id' => $record->id,
-            'employee_code' => $record->employee->employee_code,
-            'employee_name' => $record->employee->full_name,
+            'employee_name' => $record->employee_name,
             'predicted_base_salary' => $record->predicted_base_salary,
             'currency_code' => $record->currency_code,
             'model_version' => $record->model_version,

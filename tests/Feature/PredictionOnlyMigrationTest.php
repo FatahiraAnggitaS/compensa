@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Employee;
 use App\Models\SalaryRecord;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
@@ -16,9 +15,8 @@ it('allows an empty nullable calculation field rollback and forward cycle', func
 });
 
 it('refuses rollback when pure prediction records would violate legacy required fields', function () {
-    $employee = Employee::factory()->create();
     SalaryRecord::query()->create([
-        'employee_id' => $employee->id,
+        'employee_name' => 'Employee Prediksi',
         'knowledge_score' => 65,
         'technical_score' => 70,
         'logical_score' => 70,

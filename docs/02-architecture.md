@@ -54,21 +54,20 @@ Training tidak membaca application database.
 
 ## 5. Inference lifecycle
 
-1. Form Request memvalidasi employee dan empat feature.
-2. Service mengunci employee dan memeriksa status aktif dalam transaction.
-3. Artifact reader memvalidasi schema, algorithm, feature order, target, values, metrics, dan parity contract.
-4. Predictor menghitung `intercept + sum(coefficient × feature)` memakai float untuk parity dengan scikit-learn.
-5. Predictor menolak hasil non-finite, nol, negatif, atau overflow.
-6. Predictor membulatkan output menjadi dua desimal memakai BCMath `HalfAwayFromZero`.
-7. Predictor menentukan OOD dari observed feature ranges.
-8. Eloquent menyimpan immutable prediction record.
+1. Form Request trim dan memvalidasi nama employee serta empat feature.
+2. Artifact reader memvalidasi schema, algorithm, feature order, target, values, metrics, dan parity contract.
+3. Predictor menghitung `intercept + sum(coefficient × feature)` memakai float untuk parity dengan scikit-learn.
+4. Predictor menolak hasil non-finite, nol, negatif, atau overflow.
+5. Predictor membulatkan output menjadi dua desimal memakai BCMath `HalfAwayFromZero`.
+6. Predictor menentukan OOD dari observed feature ranges.
+7. Eloquent melakukan satu insert immutable prediction record dengan snapshot nama employee.
 
 ## 6. Failure behavior
 
 - Artifact hilang/rusak: form dinonaktifkan atau submit gagal aman.
 - Contract mismatch: inference ditolak.
-- Input invalid atau employee nonaktif: record tidak dibuat.
-- Database failure: transaction rollback.
+- Input invalid: record tidak dibuat.
+- Database failure: insert gagal dan tidak ada partial record.
 - Negative/non-finite prediction: record tidak dibuat.
 
 ## 7. Excluded architecture

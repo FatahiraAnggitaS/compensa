@@ -19,23 +19,23 @@
 
 ## 3. Database dan service
 
-- Employee normalization, uniqueness, lifecycle, dan delete restriction.
-- Pure prediction record menyimpan employee, inputs, output, currency, model version, OOD flag, dan timestamp.
+- Direct-name prediction menyimpan trimmed employee name, inputs, output, currency, model version, OOD flag, dan timestamp.
+- Legacy employee relation, backfill nama, nullable FK, delete restriction, dan guarded rollback tetap diuji.
 - Legacy calculation fields tetap nullable dan tidak diisi writer aktif.
 - Nullable migration forward/rollback pada empty table.
 - Rollback guard saat pure prediction record tersedia.
-- Transaction rollback saat insert gagal.
+- Insert failure tidak menghasilkan partial record.
 
 ## 4. Web
 
-- Form hanya memuat employee dan empat feature.
+- Form hanya memuat nama employee dan empat feature.
 - Form tidak memuat periode, hari kerja, lembur, total, report, atau export.
-- Active employee requirement.
 - Invalid input dan invalid artifact tidak menyimpan record.
 - Post/Redirect/Get tidak membuat duplicate record saat refresh.
-- History ordering, employee filter, pagination, detail, dan OOD warning.
+- History ordering, pencarian nama employee, pagination, detail, dan OOD warning.
 - Monthly report routes tidak tersedia.
-- Public demo employee write guard, prediction throttle, dan security headers.
+- Employee Management route tidak tersedia.
+- Public demo warning, prediction throttle, dan security headers.
 
 ## 5. Manual checks
 

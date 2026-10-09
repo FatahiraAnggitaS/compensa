@@ -16,7 +16,7 @@ Laravel, Blade, Vite, Pest, Pint, Python environment, health check, safe errors,
 
 Status: **Complete**.
 
-Employee lifecycle, original salary-record schema, portable migrations, relation, demo seed, dan focused tests tersedia.
+Employee lifecycle, original salary-record schema, portable migrations, relation, demo seed, dan focused tests pernah menjadi fondasi awal. Employee Management kemudian dinonaktifkan pada Milestone 8; tabel dan relasi lama tetap dipertahankan untuk compatibility.
 
 ## Milestone 3 — Reproducible ML
 
@@ -28,7 +28,7 @@ Strict validator, deterministic training/evaluation, atomic JSON artifact, stabl
 
 Status: **Complete, revised 2026-10-09**.
 
-Laravel inference, artifact validation, OOD detection, two-decimal output rounding, active-employee lock, transaction save, Post/Redirect/Get, dan failure states tersedia. Salary calculation behavior telah dikeluarkan dari scope.
+Laravel inference, artifact validation, OOD detection, two-decimal output rounding, direct-name snapshot, Post/Redirect/Get, dan failure states tersedia. Salary calculation behavior telah dikeluarkan dari scope.
 
 ## Milestone 5 — Prediction history
 
@@ -40,7 +40,7 @@ History newest-first, employee filter, pagination, detail input/output, model ve
 
 Status: **Deployment-ready locally; live deployment pending**.
 
-Public demo guard, rate limit, security headers, accessible navigation, license, documentation, CI, dan Laravel Cloud runbook tersedia.
+Public demo warning, rate limit, security headers, accessible navigation, license, documentation, CI, dan Laravel Cloud runbook tersedia.
 
 ## Milestone 7 — Pure prediction scope reduction
 
@@ -57,7 +57,20 @@ Deliverables:
 
 Stop condition: web hanya menjalankan prediction flow, seluruh test lulus, dan tidak ada route aktif untuk salary calculation/reporting.
 
-Completion evidence: 69 Pest tests dan 311 assertions lulus; Pint, 16 Python tests, Ruff lint/format, Vite build, Composer validation/audit, dan NPM audit lulus. Route list hanya memuat prediction, employee, history, model information, dan health routes. Removed report paths memiliki explicit 404 regression tests.
+Completion evidence saat milestone ditutup: 69 Pest tests dan 311 assertions lulus; Pint, 16 Python tests, Ruff lint/format, Vite build, Composer validation/audit, dan NPM audit lulus. Removed report paths memiliki explicit 404 regression tests.
+
+## Milestone 8 — Direct employee name
+
+Status: **Complete locally (2026-10-09)**.
+
+- Nama employee diketik langsung pada form prediction.
+- Setiap record menyimpan `employee_name` sebagai immutable snapshot.
+- `employee_id` tetap nullable sebagai legacy compatibility; data lama dibackfill tanpa dihapus.
+- Employee CRUD, navigation, public-demo guard, dan demo seed dihapus.
+- History menggunakan pencarian nama, bukan data master employee.
+- Rollback migration ditolak bila direct-name records tidak dapat memenuhi schema lama.
+
+Verification: 66 Pest tests / 260 assertions lulus; termasuk backfill, empty rollback/forward, guard rollback, validasi nama, dan history. Dua migration tertunda berhasil diterapkan pada SQLite lokal. Pint, 16 Python tests dengan `.venv`, Ruff, Vite build, Composer validation/audit, dan NPM audit lulus. PostgreSQL/live deployment tetap belum diverifikasi.
 
 ## Future improvements
 

@@ -3,11 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
     'employee_id',
+    'employee_name',
     'knowledge_score',
     'technical_score',
     'logical_score',
@@ -35,6 +37,14 @@ final class SalaryRecord extends Model
             'has_ood_input' => 'boolean',
             'created_at' => 'immutable_datetime',
         ];
+    }
+
+    /** @return Attribute<string, string> */
+    protected function employeeName(): Attribute
+    {
+        return Attribute::make(
+            set: static fn (string $value): string => trim($value),
+        );
     }
 
     /**

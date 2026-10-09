@@ -18,7 +18,6 @@ Deploy:
 
 ```bash
 php artisan migrate --force
-php artisan app:seed-demo-data
 php artisan optimize
 ```
 
@@ -37,9 +36,8 @@ QUEUE_CONNECTION=sync
 
 ## 3. Public demo
 
-- Employee list/detail tersedia.
-- Employee mutation disembunyikan dan ditolak 403.
-- Prediction tetap aktif untuk employee demo.
+- Tidak ada seed atau data master employee yang diperlukan.
+- Prediction menerima nama employee langsung.
 - Prediction dibatasi 10 request/menit/IP.
 - History bersifat publik; gunakan hanya data fiktif.
 - Response membawa defensive security headers.
@@ -66,7 +64,7 @@ Tanpa authentication, deployment tidak boleh menerima employee atau salary data 
 ## 6. Smoke checklist
 
 - `/up` healthy.
-- Employee list/detail tersedia; mutation 403.
+- Form prediction menerima nama fiktif tanpa setup employee.
 - Prediction valid tersimpan.
 - History list/detail menampilkan hasil yang sama.
 - Invalid input tidak tersimpan.
@@ -75,7 +73,7 @@ Tanpa authentication, deployment tidak boleh menerima employee atau salary data 
 
 ## 7. Rollback
 
-Gunakan previous application release dan artifact sebagai satu unit. Nullable legacy-field migration menolak rollback bila pure prediction records tersedia. Backup database sebelum schema rollback.
+Gunakan previous application release dan artifact sebagai satu unit. Nullable legacy-field migration menolak rollback bila pure prediction records tersedia. Migration nama employee menolak rollback bila record baru memiliki `employee_id` null. Backup database sebelum schema rollback; rollback aplikasi ke versi Employee Management memerlukan pemetaan data yang eksplisit.
 
 ## 8. Excluded infrastructure
 

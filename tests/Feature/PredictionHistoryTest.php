@@ -1,15 +1,20 @@
 <?php
 
-use App\Models\Employee;
 use App\Models\SalaryRecord;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
 
-function createHistoryPredictionRecord(Employee $employee, array $overrides = []): SalaryRecord
+it('shows the initial empty state without a name filter', function () {
+    $this->get(route('prediction-history.index'))
+        ->assertOk()
+        ->assertSeeText('Belum ada riwayat prediksi');
+});
+
+function createHistoryPredictionRecord(string $employeeName, array $overrides = []): SalaryRecord
 {
     return SalaryRecord::query()->create(array_replace([
-        'employee_id' => $employee->id,
+        'employee_name' => $employeeName,
         'knowledge_score' => 65,
         'technical_score' => 70,
         'logical_score' => 75,
@@ -21,45 +26,36 @@ function createHistoryPredictionRecord(Employee $employee, array $overrides = []
     ], $overrides));
 }
 
-it('lists newest prediction records first and filters by employee', function () {
-    $alpha = Employee::factory()->create(['employee_code' => 'EMP-ALPHA']);
-    $beta = Employee::factory()->create(['employee_code' => 'EMP-BETA']);
-
-    $older = createHistoryPredictionRecord($alpha);
-    $newer = createHistoryPredictionRecord($beta);
+it('lists newest prediction records first and filters by employee name', function () {
+    $older = createHistoryPredictionRecord('Employee Alpha');
+    $newer = createHistoryPredictionRecord('Employee Beta');
     $older->forceFill(['created_at' => '2026-09-15 01:00:00'])->saveQuietly();
     $newer->forceFill(['created_at' => '2026-10-15 01:00:00'])->saveQuietly();
 
     $this->get(route('prediction-history.index'))
         ->assertOk()
-        ->assertSeeInOrder(['EMP-BETA', 'EMP-ALPHA'])
+        ->assertSeeInOrder(['Employee Beta', 'Employee Alpha'])
         ->assertDontSeeText('Bulan laporan');
 
-    $this->get(route('prediction-history.index', ['employee_id' => $alpha->id]))
+    $this->get(route('prediction-history.index', ['q' => 'alpha']))
         ->assertOk()
-        ->assertSeeText('EMP-ALPHA')
+        ->assertSeeText('Employee Alpha')
         ->assertViewHas('records', fn ($records) => $records->pluck('id')->all() === [$older->id]);
 });
 
 it('paginates history at fifteen records while preserving employee filter', function () {
-    $employee = Employee::factory()->create(['employee_code' => 'EMP-PAGE']);
-
     foreach (range(1, 16) as $index) {
-        createHistoryPredictionRecord($employee, ['predicted_base_salary' => (string) (6000000 + $index)]);
+        createHistoryPredictionRecord('Employee Page', ['predicted_base_salary' => (string) (6000000 + $index)]);
     }
 
-    $this->get(route('prediction-history.index', ['employee_id' => $employee->id]))
+    $this->get(route('prediction-history.index', ['q' => 'Employee Page']))
         ->assertOk()
         ->assertViewHas('records', fn ($records) => $records->count() === 15 && $records->hasMorePages())
-        ->assertSee('employee_id='.$employee->id, escape: false);
+        ->assertSee('q=Employee%20Page', escape: false);
 });
 
 it('shows the immutable prediction snapshot and OOD warning', function () {
-    $employee = Employee::factory()->create([
-        'employee_code' => 'EMP-DETAIL',
-        'full_name' => 'Employee Detail',
-    ]);
-    $record = createHistoryPredictionRecord($employee, [
+    $record = createHistoryPredictionRecord('Employee Detail', [
         'knowledge_score' => 10,
         'model_version' => 'sha256:'.str_repeat('b', 64),
         'has_ood_input' => true,
@@ -67,7 +63,7 @@ it('shows the immutable prediction snapshot and OOD warning', function () {
 
     $this->get(route('prediction-history.show', $record))
         ->assertOk()
-        ->assertSeeText('EMP-DETAIL')
+        ->assertSeeText('Employee Detail')
         ->assertSeeText('Knowledge score')
         ->assertSeeText('10')
         ->assertSeeText('sha256:'.str_repeat('b', 64))
@@ -77,7 +73,7 @@ it('shows the immutable prediction snapshot and OOD warning', function () {
         ->assertDontSee('method="POST"', escape: false);
 });
 
-it('rejects malformed employee history filter', function () {
-    $this->get(route('prediction-history.index', ['employee_id' => 999999]))
-        ->assertSessionHasErrors(['employee_id']);
+it('rejects an employee history filter over 150 characters', function () {
+    $this->get(route('prediction-history.index', ['q' => str_repeat('a', 151)]))
+        ->assertSessionHasErrors(['q']);
 });

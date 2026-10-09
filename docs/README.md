@@ -21,7 +21,7 @@ Folder ini menjadi source of truth Compensa. Scope aktif sejak 2026-10-09 adalah
 |---|---|
 | Scope dan acceptance criteria | `01-requirements.md` |
 | Arsitektur dan module boundary | `02-architecture.md` |
-| Schema dan data preservation | `03-database-design.md` |
+| Schema, snapshot nama employee, dan data preservation | `03-database-design.md` |
 | Dataset, training, evaluation, artifact | `04-machine-learning.md` |
 | Prediction output, OOD, dan rounding | `05-salary-business-rules.md` |
 | Form, history, dan failure states | `06-application-flows.md` |

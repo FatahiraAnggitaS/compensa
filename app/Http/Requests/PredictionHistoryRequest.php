@@ -6,6 +6,13 @@ use Illuminate\Foundation\Http\FormRequest;
 
 final class PredictionHistoryRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'q' => is_string($this->q) ? trim($this->q) : $this->q,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -17,7 +24,7 @@ final class PredictionHistoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_id' => ['nullable', 'integer', 'exists:employees,id'],
+            'q' => ['nullable', 'string', 'max:150'],
         ];
     }
 
@@ -27,7 +34,7 @@ final class PredictionHistoryRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'employee_id' => 'employee',
+            'q' => 'nama employee',
         ];
     }
 }

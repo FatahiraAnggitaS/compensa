@@ -2,17 +2,19 @@
 
 ## 1. Ownership
 
-Application database menyimpan employee dan prediction history. Dataset training tetap file terpisah. Prediction user bukan ground-truth label dan tidak menjadi training row.
+Application database menyimpan prediction history beserta snapshot nama employee. Dataset training tetap file terpisah. Prediction user bukan ground-truth label dan tidak menjadi training row.
 
 ## 2. ERD
 
 ```text
-employees 1 ----- many salary_records
+employees (legacy) 1 ----- many salary_records
+                              |
+                              +-- employee_name (active identity snapshot)
 ```
 
 Nama tabel `salary_records` dipertahankan untuk kompatibilitas migration dan data lama. Scope aktif memperlakukannya sebagai prediction records.
 
-## 3. Employees
+## 3. Employees (legacy compatibility)
 
 | Column | Contract |
 |---|---|
@@ -22,14 +24,15 @@ Nama tabel `salary_records` dipertahankan untuk kompatibilitas migration dan dat
 | `is_active` | Boolean, default true |
 | timestamps | Created dan updated time |
 
-Employee yang memiliki prediction records tidak dapat dihapus. Gunakan reversible active status.
+Tabel ini dipertahankan agar record lama dan foreign key lama tetap valid. Tidak ada route, UI, seed, atau writer Employee Management pada scope aktif.
 
 ## 4. Active prediction fields
 
 | Column | Contract |
 |---|---|
 | `id` | Primary key |
-| `employee_id` | Required FK, restrict delete |
+| `employee_name` | Required string maksimal 150; snapshot nama yang di-trim |
+| `employee_id` | Nullable legacy FK, restrict delete bila terisi |
 | `knowledge_score` | Integer 0–100 |
 | `technical_score` | Integer 0–100 |
 | `logical_score` | Integer 0–100 |
@@ -61,11 +64,11 @@ Rollback nullable migration ditolak bila pure prediction records memiliki nilai 
 ## 6. Constraints dan indexes
 
 - Unique index pada normalized employee code.
-- Foreign key `salary_records.employee_id` memakai restricted deletion.
+- Foreign key nullable `salary_records.employee_id` memakai restricted deletion untuk record lama.
 - Existing legacy indexes dipertahankan untuk compatibility; writer aktif tidak bergantung padanya.
 - Format/range input dan OOD flag ditegakkan oleh Laravel.
 - Money result harus finite, positive, dan muat dalam `Decimal(18,2)`.
 
-## 7. Transactions
+## 7. Name migration dan rollback
 
-Employee lock, artifact inference, dan insert terjadi dalam satu database transaction. Failure tidak membuat partial record.
+Migration 2026-10-09 menambah `employee_name`, mengisi record lama dari `employees.full_name`, lalu membuatnya required dan `employee_id` nullable. Rollback ditolak jika record direct-name tanpa `employee_id` tersedia. Guard ini mempertahankan data lama dan mencegah rollback yang menghasilkan schema tidak valid.

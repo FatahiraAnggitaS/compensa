@@ -20,6 +20,7 @@ it('creates the employee and salary record schemas', function () {
         ->and(Schema::hasColumns('salary_records', [
             'id',
             'employee_id',
+            'employee_name',
             'reporting_month',
             'period_start',
             'period_end',
@@ -62,11 +63,34 @@ it('normalizes codes for every eloquent write and enforces database uniqueness',
     ]))->toThrow(QueryException::class);
 });
 
-it('stores prediction snapshot casts and relationships without calculation fields', function () {
+it('stores direct employee name snapshots without calculation fields', function () {
+    $record = SalaryRecord::query()->create([
+        'employee_name' => '  Employee Langsung  ',
+        'knowledge_score' => 80,
+        'technical_score' => 75,
+        'logical_score' => 78,
+        'years_of_experience' => '3.50',
+        'predicted_base_salary' => '8500000.25',
+        'currency_code' => 'IDR',
+        'model_version' => str_repeat('a', 64),
+        'has_ood_input' => true,
+    ]);
+
+    expect($record)
+        ->employee_id->toBeNull()
+        ->employee_name->toBe('Employee Langsung')
+        ->years_of_experience->toBe('3.50')
+        ->predicted_base_salary->toBe('8500000.25')
+        ->has_ood_input->toBeTrue()
+        ->and($record->getRawOriginal('overtime_hours'))->toBeNull();
+});
+
+it('keeps legacy employee relationships available', function () {
     $employee = Employee::factory()->create();
 
     $record = SalaryRecord::query()->create([
         'employee_id' => $employee->id,
+        'employee_name' => $employee->full_name,
         'knowledge_score' => 80,
         'technical_score' => 75,
         'logical_score' => 78,
@@ -91,6 +115,7 @@ it('protects employees referenced by salary records from deletion', function () 
 
     SalaryRecord::query()->create([
         'employee_id' => $employee->id,
+        'employee_name' => $employee->full_name,
         'knowledge_score' => 80,
         'technical_score' => 75,
         'logical_score' => 78,

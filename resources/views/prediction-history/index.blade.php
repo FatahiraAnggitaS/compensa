@@ -12,16 +12,9 @@
     <section class="panel overflow-hidden">
         <form method="GET" action="{{ route('prediction-history.index') }}" class="grid gap-4 border-b border-slate-200 p-5 sm:grid-cols-[1fr_auto_auto] sm:items-end lg:px-6">
             <div>
-                <label class="form-label" for="history-employee">Employee</label>
-                <select id="history-employee" name="employee_id" class="form-input @error('employee_id') form-input-error @enderror" @error('employee_id') aria-invalid="true" aria-describedby="history-employee-error" @enderror>
-                    <option value="">Semua employee</option>
-                    @foreach ($employees as $employee)
-                        <option value="{{ $employee->id }}" @selected((string) ($filters['employee_id'] ?? '') === (string) $employee->id)>
-                            {{ $employee->employee_code }} — {{ $employee->full_name }}
-                        </option>
-                    @endforeach
-                </select>
-                @error('employee_id')<p id="history-employee-error" class="form-error">{{ $message }}</p>@enderror
+                <label class="form-label" for="history-employee">Nama employee</label>
+                <input id="history-employee" name="q" value="{{ $filters['q'] ?? '' }}" type="search" maxlength="150" class="form-input @error('q') form-input-error @enderror" placeholder="Cari nama employee" @error('q') aria-invalid="true" aria-describedby="history-employee-error" @enderror>
+                @error('q')<p id="history-employee-error" class="form-error">{{ $message }}</p>@enderror
             </div>
             <button type="submit" class="button-primary">Terapkan filter</button>
             <a href="{{ route('prediction-history.index') }}" class="button-secondary">Reset</a>
@@ -53,8 +46,7 @@
                         @foreach ($records as $record)
                             <tr class="align-top">
                                 <td class="px-5 py-4 sm:px-6">
-                                    <p class="font-semibold text-slate-900">{{ $record->employee->employee_code }}</p>
-                                    <p class="mt-1 text-xs text-slate-500">{{ $record->employee->full_name }}</p>
+                                    <p class="font-semibold text-slate-900">{{ $record->employee_name }}</p>
                                 </td>
                                 <td class="whitespace-nowrap px-5 py-4 font-semibold text-slate-950">{{ \App\Support\DecimalFormatter::idr($record->predicted_base_salary) }}</td>
                                 <td class="px-5 py-4">

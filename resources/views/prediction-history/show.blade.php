@@ -21,7 +21,7 @@
         <section class="panel p-5 sm:p-6">
             <h2 class="text-lg font-bold text-slate-950">Employee</h2>
             <dl class="mt-3 divide-y divide-slate-100">
-                <div class="definition-row"><dt>Employee</dt><dd>{{ $record->employee->employee_code }} — {{ $record->employee->full_name }}</dd></div>
+                <div class="definition-row"><dt>Employee</dt><dd>{{ $record->employee_name }}</dd></div>
                 <div class="definition-row"><dt>Waktu pencatatan</dt><dd>{{ $record->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s') }} WIB</dd></div>
             </dl>
         </section>

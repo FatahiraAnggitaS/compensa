@@ -12,7 +12,7 @@ Compensa tidak menghitung periode kerja, prorata, jam kerja, lembur, allowance, 
 - `technical_score`: integer 0–100.
 - `logical_score`: integer 0–100.
 - `years_of_experience`: numeric non-negative, maksimal 2 desimal, batas request 999.99.
-- Employee wajib aktif saat request dan diperiksa ulang dalam transaction.
+- `employee_name`: required, di-trim, maksimal 150 karakter, dan disimpan sebagai snapshot record.
 
 ## 3. Model equation
 

@@ -2,12 +2,19 @@
 
 namespace App\Http\Requests;
 
-use App\Models\Employee;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
 final class StoreSalaryPredictionRequest extends FormRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $this->merge([
+            'employee_name' => is_string($this->employee_name)
+                ? trim($this->employee_name)
+                : $this->employee_name,
+        ]);
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -17,11 +24,7 @@ final class StoreSalaryPredictionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'employee_id' => [
-                'required',
-                'integer',
-                Rule::exists(Employee::class, 'id')->where('is_active', true),
-            ],
+            'employee_name' => ['required', 'string', 'max:150'],
             'knowledge_score' => ['required', 'integer', 'between:0,100'],
             'technical_score' => ['required', 'integer', 'between:0,100'],
             'logical_score' => ['required', 'integer', 'between:0,100'],
@@ -33,7 +36,7 @@ final class StoreSalaryPredictionRequest extends FormRequest
     public function attributes(): array
     {
         return [
-            'employee_id' => 'employee',
+            'employee_name' => 'nama employee',
             'knowledge_score' => 'knowledge score',
             'technical_score' => 'technical score',
             'logical_score' => 'logical score',

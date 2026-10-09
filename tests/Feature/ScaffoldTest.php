@@ -12,7 +12,7 @@ it('renders the salary prediction form as the root page', function () {
         ->assertSee('Knowledge Score')
         ->assertSeeText('Integer 0–100')
         ->assertSeeText('Prediksi & simpan hasil')
-        ->assertSee('disabled', escape: false);
+        ->assertSee('name="employee_name"', escape: false);
 });
 
 it('shows the trained synthetic model metadata from its artifact', function () {
@@ -30,7 +30,6 @@ it('renders every MVP page', function (string $routeName, string $heading) {
         ->assertSee('Compensa')
         ->assertSee($heading);
 })->with([
-    'employee management' => ['employees.index', 'Employee'],
     'prediction history' => ['prediction-history.index', 'Riwayat prediksi'],
     'model information' => ['model-information.index', 'Informasi model'],
 ]);
@@ -46,6 +45,8 @@ it('does not expose removed salary calculation and report pages', function (stri
     '/monthly-report/export/csv',
     '/monthly-report/export/xlsx',
     '/monthly-report/print',
+    '/employees',
+    '/employees/create',
 ]);
 
 it('renders a safe branded not-found page', function () {

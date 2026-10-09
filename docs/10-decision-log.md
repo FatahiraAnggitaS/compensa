@@ -666,3 +666,10 @@ Dokumen ini mencatat keputusan material hasil Q&A. `Accepted with conditions` ha
 ## Open decisions and blockers
 
 Tidak ada open decision yang menghalangi portfolio release lokal. Deployment account, live URL, dan PostgreSQL smoke adalah pekerjaan operasional pending, bukan keputusan architecture yang terbuka.
+## D-083: Direct employee name replaces Employee Management
+
+- Date: 2026-10-09
+- Status: Accepted; supersedes active Employee Management, demo seed, and employee-write guard portions of D-010, D-072, D-073, and D-078.
+- Decision: User mengetik nama employee langsung pada prediction form. `salary_records.employee_name` menjadi required immutable snapshot. `employee_id` menjadi nullable dan tabel `employees` tetap ada hanya untuk kompatibilitas record lama.
+- Reason: Scope aplikasi adalah prediksi sederhana; registrasi employee menambah langkah yang tidak diperlukan sebelum inference.
+- Consequence: Employee CRUD/routes/views/seed dihapus. Record lama dibackfill dari `employees.full_name`; record baru tidak memerlukan employee row. Rollback ditolak bila direct-name record tidak memiliki legacy employee ID.

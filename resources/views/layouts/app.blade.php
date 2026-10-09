@@ -18,7 +18,7 @@
             <div class="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8 lg:px-10 lg:py-10">
                 @if (config('demo.public'))
                     <div class="mb-6 border-l-4 border-amber-500 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950" role="note" aria-label="Informasi public demo">
-                        <strong>Public demo:</strong> gunakan hanya data fiktif. Data prediksi yang disimpan dapat dilihat pengunjung lain dan pengelolaan employee dibuat read-only.
+                        <strong>Public demo:</strong> gunakan hanya nama dan data fiktif. Hasil prediksi yang disimpan dapat dilihat pengunjung lain.
                     </div>
                 @endif
 

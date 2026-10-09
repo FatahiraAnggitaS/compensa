@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\PredictionHistoryRequest;
-use App\Models\Employee;
 use App\Models\SalaryRecord;
 use Illuminate\Contracts\View\View;
 
@@ -11,13 +10,15 @@ final class PredictionHistoryController extends Controller
 {
     public function index(PredictionHistoryRequest $request): View
     {
-        $filters = $request->validated();
+        $filters = array_filter($request->validated(), static fn ($value) => $value !== null && $value !== '');
 
         $records = SalaryRecord::query()
-            ->with('employee')
             ->when(
-                isset($filters['employee_id']),
-                fn ($query) => $query->where('employee_id', $filters['employee_id']),
+                isset($filters['q']) && $filters['q'] !== '',
+                fn ($query) => $query->whereRaw(
+                    'LOWER(employee_name) LIKE ?',
+                    ['%'.mb_strtolower($filters['q']).'%'],
+                ),
             )
             ->orderByDesc('created_at')
             ->orderByDesc('id')
@@ -25,7 +26,6 @@ final class PredictionHistoryController extends Controller
             ->withQueryString();
 
         return view('prediction-history.index', [
-            'employees' => Employee::query()->orderBy('employee_code')->get(),
             'records' => $records,
             'filters' => $filters,
         ]);
@@ -34,7 +34,7 @@ final class PredictionHistoryController extends Controller
     public function show(SalaryRecord $salaryRecord): View
     {
         return view('prediction-history.show', [
-            'record' => $salaryRecord->load('employee'),
+            'record' => $salaryRecord,
         ]);
     }
 }

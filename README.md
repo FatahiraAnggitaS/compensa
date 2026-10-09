@@ -1,17 +1,17 @@
 # Compensa
 
-Compensa adalah aplikasi portfolio Laravel untuk memprediksi **monthly base salary** dengan scikit-learn `LinearRegression`. User memilih employee, memasukkan empat feature, lalu Laravel melakukan inference dari artifact JSON terlatih dan menyimpan hasil prediksi.
+Compensa adalah aplikasi portfolio Laravel untuk memprediksi **monthly base salary** dengan scikit-learn `LinearRegression`. User mengetik nama employee, memasukkan empat feature, lalu Laravel melakukan inference dari artifact JSON terlatih dan menyimpan hasil prediksi.
 
 Compensa bukan payroll, kalkulator lembur, atau sistem HR. Dataset bersifat sintetis dan hasil tidak boleh dipakai sebagai benchmark gaji pasar atau keputusan kerja.
 
 ## Fitur
 
-- Employee management dengan identitas minimum dan status aktif.
+- Nama employee diketik langsung pada form tanpa registrasi data master.
 - Prediksi base salary dari Knowledge Score, Technical Score, Logical Score, dan Years of Experience.
 - Offline Python training terpisah dari request web.
 - Trusted JSON artifact dengan model version, coefficient, intercept, ranges, dan metrics.
 - OOD warning saat input berada di luar rentang data training.
-- Riwayat prediksi immutable dengan filter employee.
+- Riwayat prediksi immutable dengan pencarian nama employee.
 - Model Information dari metadata artifact aktual.
 - Public demo guard, rate limit, security headers, dan responsive Blade UI.
 
@@ -23,7 +23,7 @@ CSV sintetis
   -> deterministic training dan evaluation
   -> committed JSON artifact
   -> Laravel artifact validation
-  -> employee + empat feature
+  -> nama employee + empat feature
   -> Linear Regression inference
   -> predicted monthly base salary
   -> database history
@@ -46,7 +46,6 @@ npm ci
 copy .env.example .env
 php artisan key:generate
 php artisan migrate
-php artisan app:seed-demo-data
 npm run build
 ```
 
@@ -56,7 +55,7 @@ Jalankan melalui Laravel Herd atau:
 php artisan serve
 ```
 
-Demo seed membuat dua employee aktif dan satu employee nonaktif. Data demo tidak mencakup hasil prediksi.
+Tidak ada seed employee yang diperlukan. Gunakan nama fiktif ketika mencoba public demo.
 
 ## Training
 

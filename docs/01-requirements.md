@@ -5,26 +5,21 @@
 Compensa menunjukkan alur portfolio berikut:
 
 ```text
-employee -> empat model input -> base salary prediction -> saved record -> prediction history
+nama employee -> empat model input -> base salary prediction -> saved record -> prediction history
 ```
 
 Aplikasi hanya memprediksi monthly base salary dalam IDR. Aplikasi bukan payroll, kalkulator kompensasi, benchmark pasar, atau alat keputusan HR.
 
 ## 2. Pengguna
 
-Satu operator mengelola employee, membuat prediksi, melihat history, dan membaca informasi model. Authentication, role, approval, dan multi-tenant tidak masuk MVP.
+Satu operator membuat prediksi, melihat history, dan membaca informasi model. Authentication, role, approval, dan multi-tenant tidak masuk MVP.
 
 ## 3. Scope
 
-### Employee Management
-
-- Simpan employee code, full name, dan active status.
-- List, search, detail, create, edit, deactivate, dan reactivate.
-- Tidak ada delete route.
-
 ### Salary Prediction
 
-- Pilih employee aktif.
+- Ketik nama employee secara langsung; tidak ada registrasi atau pemilihan data master employee.
+- Nama wajib, di-trim, maksimal 150 karakter, dan tidak menjadi feature model. Nama sama dapat dipakai untuk beberapa prediksi tanpa penggabungan identitas.
 - Masukkan `knowledge_score`, `technical_score`, `logical_score`, dan `years_of_experience`.
 - Jalankan inference memakai committed `LinearRegression` JSON artifact.
 - Tampilkan dan simpan `predicted_base_salary`, model version, dan OOD flag.
@@ -33,7 +28,7 @@ Satu operator mengelola employee, membuat prediksi, melihat history, dan membaca
 ### Prediction History
 
 - Tampilkan record terbaru lebih dahulu.
-- Filter berdasarkan employee.
+- Cari berdasarkan nama employee.
 - Tampilkan empat input, hasil, OOD status, model version, dan waktu pencatatan.
 - Record tidak diedit melalui UI.
 
@@ -51,6 +46,7 @@ Satu operator mengelola employee, membuat prediksi, melihat history, dan membaca
 - Server melakukan validation dan OOD detection.
 - Predicted salary dibulatkan dua desimal dengan BCMath.
 - Setiap record menyimpan model version.
+- Setiap record menyimpan nama employee sebagai snapshot yang tidak bergantung pada data master.
 - Hasil selalu disebut prediksi atau estimasi.
 
 ## 5. Non-goals
@@ -78,3 +74,4 @@ Satu operator mengelola employee, membuat prediksi, melihat history, dan membaca
 8. History hanya menampilkan data prediksi.
 9. UI tidak menampilkan periode, prorata, lembur, total salary, report, atau export.
 10. Automated tests dan production build lulus.
+11. Route dan UI Employee Management tidak tersedia.

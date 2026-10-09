@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Employee;
 use App\Models\SalaryRecord;
 use App\Services\SalaryRecordService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -8,10 +7,10 @@ use Illuminate\Support\Facades\DB;
 
 uses(RefreshDatabase::class);
 
-function validSalaryPredictionPayload(Employee $employee): array
+function validSalaryPredictionPayload(): array
 {
     return [
-        'employee_id' => $employee->id,
+        'employee_name' => 'Employee Prediksi',
         'knowledge_score' => 65,
         'technical_score' => 70,
         'logical_score' => 70,
@@ -19,14 +18,11 @@ function validSalaryPredictionPayload(Employee $employee): array
     ];
 }
 
-it('renders an enabled pure prediction form with active employees and artifact ranges', function () {
-    $active = Employee::factory()->create(['employee_code' => 'ACTIVE-01']);
-    $inactive = Employee::factory()->create(['employee_code' => 'INACTIVE-01', 'is_active' => false]);
-
+it('renders an enabled pure prediction form with a direct employee name and artifact ranges', function () {
     $this->get(route('salary-predictions.index'))
         ->assertOk()
-        ->assertSeeText($active->employee_code)
-        ->assertDontSeeText($inactive->employee_code)
+        ->assertSee('name="employee_name"', escape: false)
+        ->assertDontSee('name="employee_id"', escape: false)
         ->assertSeeText('Rentang training 40–90')
         ->assertDontSeeText('lembur')
         ->assertDontSee('name="reporting_month"', escape: false)
@@ -34,13 +30,11 @@ it('renders an enabled pure prediction form with active employees and artifact r
         ->assertSee('action="'.route('salary-predictions.store').'"', escape: false);
 });
 
-it('disables the form when no active employee or artifact is available', function () {
+it('disables the form only when the artifact is unavailable', function () {
     $this->get(route('salary-predictions.index'))
         ->assertOk()
-        ->assertSeeText('Tidak ada employee aktif')
-        ->assertSee('disabled', escape: false);
+        ->assertDontSeeText('Tidak ada employee aktif');
 
-    Employee::factory()->create();
     config()->set('ml.artifact_path', sys_get_temp_dir().'/missing-compensa-model.json');
 
     $this->get(route('salary-predictions.index'))
@@ -50,9 +44,7 @@ it('disables the form when no active employee or artifact is available', functio
 });
 
 it('predicts and stores one immutable result without salary calculation fields', function () {
-    $employee = Employee::factory()->create(['employee_code' => 'EMP-PRG']);
-
-    $response = $this->post(route('salary-predictions.store'), validSalaryPredictionPayload($employee));
+    $response = $this->post(route('salary-predictions.store'), validSalaryPredictionPayload());
 
     $response->assertRedirect(route('salary-predictions.index'))
         ->assertSessionHas('status')
@@ -60,7 +52,8 @@ it('predicts and stores one immutable result without salary calculation fields',
 
     $record = SalaryRecord::query()->sole();
     expect($record)
-        ->employee_id->toBe($employee->id)
+        ->employee_id->toBeNull()
+        ->employee_name->toBe('Employee Prediksi')
         ->predicted_base_salary->toBe('6028065.74')
         ->model_version->toMatch('/^sha256:[0-9a-f]{64}$/')
         ->has_ood_input->toBeFalse()
@@ -70,7 +63,7 @@ it('predicts and stores one immutable result without salary calculation fields',
     $this->get(route('salary-predictions.index'))
         ->assertOk()
         ->assertSeeText('Tersimpan')
-        ->assertSeeText('EMP-PRG')
+        ->assertSeeText('Employee Prediksi')
         ->assertSeeText('Rp 6.028.065,74');
 
     $this->get(route('salary-predictions.index'))->assertOk()->assertDontSeeText('Tersimpan');
@@ -78,8 +71,7 @@ it('predicts and stores one immutable result without salary calculation fields',
 });
 
 it('stores valid OOD input and displays an extrapolation warning', function () {
-    $employee = Employee::factory()->create();
-    $payload = validSalaryPredictionPayload($employee);
+    $payload = validSalaryPredictionPayload();
     $payload['knowledge_score'] = 0;
 
     $this->post(route('salary-predictions.store'), $payload)->assertRedirect();
@@ -89,11 +81,9 @@ it('stores valid OOD input and displays an extrapolation warning', function () {
 });
 
 it('rejects invalid model input without saving', function (array $changes, array $errors) {
-    $employee = Employee::factory()->create();
-
     $this->post(
         route('salary-predictions.store'),
-        array_replace(validSalaryPredictionPayload($employee), $changes),
+        array_replace(validSalaryPredictionPayload(), $changes),
     )->assertSessionHasErrors($errors);
 
     expect(SalaryRecord::query()->count())->toBe(0);
@@ -101,15 +91,25 @@ it('rejects invalid model input without saving', function (array $changes, array
     'score outside contract' => [['knowledge_score' => 101], ['knowledge_score']],
     'experience precision' => [['years_of_experience' => '1.234'], ['years_of_experience']],
     'missing feature' => [['logical_score' => null], ['logical_score']],
+    'blank employee name' => [['employee_name' => '   '], ['employee_name']],
+    'missing employee name' => [['employee_name' => null], ['employee_name']],
+    'long employee name' => [['employee_name' => str_repeat('a', 151)], ['employee_name']],
+    'non-string employee name' => [['employee_name' => ['invalid']], ['employee_name']],
 ]);
 
-it('rejects inactive employees and unavailable artifacts without saving', function () {
-    $employee = Employee::factory()->create(['is_active' => false]);
-    $payload = validSalaryPredictionPayload($employee);
+it('trims names and stores separate predictions for repeated names without employee rows', function () {
+    $payload = array_replace(validSalaryPredictionPayload(), ['employee_name' => '  Nama Sama  ']);
 
-    $this->post(route('salary-predictions.store'), $payload)->assertSessionHasErrors(['employee_id']);
+    $this->post(route('salary-predictions.store'), $payload)->assertSessionHasNoErrors();
+    $this->post(route('salary-predictions.store'), $payload)->assertSessionHasNoErrors();
 
-    $employee->update(['is_active' => true]);
+    expect(SalaryRecord::query()->pluck('employee_name')->all())->toBe(['Nama Sama', 'Nama Sama'])
+        ->and(DB::table('employees')->count())->toBe(0)
+        ->and(SalaryRecord::query()->whereNotNull('employee_id')->count())->toBe(0);
+});
+
+it('rejects unavailable artifacts without saving', function () {
+    $payload = validSalaryPredictionPayload();
     config()->set('ml.artifact_path', sys_get_temp_dir().'/missing-compensa-model.json');
     $this->post(route('salary-predictions.store'), $payload)->assertSessionHasErrors(['prediction']);
 
@@ -117,7 +117,6 @@ it('rejects inactive employees and unavailable artifacts without saving', functi
 });
 
 it('blocks a negative model prediction without saving', function () {
-    $employee = Employee::factory()->create();
     $artifact = json_decode(
         file_get_contents(base_path('artifacts/salary_linear_regression.json')),
         true,
@@ -128,7 +127,7 @@ it('blocks a negative model prediction without saving', function () {
     $path = tempnam(sys_get_temp_dir(), 'compensa-web-negative-model-');
     file_put_contents($path, json_encode($artifact, JSON_THROW_ON_ERROR));
     config()->set('ml.artifact_path', $path);
-    $payload = array_replace(validSalaryPredictionPayload($employee), [
+    $payload = array_replace(validSalaryPredictionPayload(), [
         'knowledge_score' => 100,
         'technical_score' => 100,
         'logical_score' => 100,
@@ -144,17 +143,14 @@ it('blocks a negative model prediction without saving', function () {
     expect(SalaryRecord::query()->count())->toBe(0);
 });
 
-it('rolls back when prediction record insert fails', function () {
-    $employee = Employee::factory()->create();
+it('does not persist a record when insertion fails', function () {
     SalaryRecord::creating(function (): void {
         throw new RuntimeException('simulated insert failure');
     });
 
     try {
-        expect(fn () => app(SalaryRecordService::class)->create(
-            $employee->id,
-            validSalaryPredictionPayload($employee),
-        ))->toThrow(RuntimeException::class, 'simulated insert failure');
+        expect(fn () => app(SalaryRecordService::class)->create(validSalaryPredictionPayload()))
+            ->toThrow(RuntimeException::class, 'simulated insert failure');
     } finally {
         SalaryRecord::flushEventListeners();
     }

@@ -8,7 +8,7 @@ it('applies and rolls back only the additive business migrations', function () {
         ->and(Schema::hasTable('employees'))->toBeTrue()
         ->and(Schema::hasTable('salary_records'))->toBeTrue();
 
-    expect(Artisan::call('migrate:rollback', ['--step' => 4, '--force' => true]))->toBe(0)
+    expect(Artisan::call('migrate:rollback', ['--step' => 5, '--force' => true]))->toBe(0)
         ->and(Schema::hasTable('salary_records'))->toBeFalse()
         ->and(Schema::hasTable('employees'))->toBeFalse()
         ->and(Schema::hasTable('users'))->toBeTrue();

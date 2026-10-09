@@ -11,6 +11,7 @@ function insertSalaryRecordForMigration(string $modelVersion): void
     $employee = Employee::factory()->create();
     DB::table('salary_records')->insert([
         'employee_id' => $employee->id,
+        'employee_name' => $employee->full_name,
         'reporting_month' => '2026-10-01',
         'period_start' => '2026-10-01',
         'period_end' => '2026-10-31',
